@@ -275,7 +275,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .ui.dark .send { background: #f5f5f7; color: #1c1c1e; }
 .send:disabled { opacity: .3; cursor: default; }
 .mic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: var(--ink2); }
-.mic.live { color: #fff; background: var(--red); }
+.mic.live { color: #fff; background: var(--red); animation: breathe 1.2s ease-in-out infinite; }
+.composer.live { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--red) 70%, transparent), 0 0 24px -6px color-mix(in srgb, var(--red) 55%, transparent); }
+.composer.live input::placeholder { color: var(--red-ink); }
 
 /* Saved */
 .saved { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 4px; }

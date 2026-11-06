@@ -1,5 +1,5 @@
-// Lumo's voice. With an Anthropic key, Lumo answers in its own words using the knowledge files,
-// the listing and the checks. Without one, the content script answers from rules (see content/chat.js).
+// LLM answers (provider set on hackathon day). Lumo answers in its own words using the knowledge files,
+// the listing and the checks. Without an LLM key in lumo/.env, the page shows "Insert key".
 
 let KB = null;
 async function knowledge() {
@@ -71,36 +71,21 @@ Data sources Lumo can draw on:
 ${kb.sources.sources.map((x) => `${x.name} (${x.status}): ${x.powers.join(', ')}`).join('\n')}`;
 }
 
-export async function askLLM(S, ctx, history) {
-  if (!S.anthropicKey) return null;
+// Returns { text } on success, { noKey: true } when no LLM key is set.
+export async function askLLM(env, ctx, history) {
+  if (!env.LLM_API_KEY) return { noKey: true };
   const kb = await knowledge();
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': S.anthropicKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true'
-    },
-    body: JSON.stringify({ model: S.anthropicModel || 'claude-haiku-5-5', max_tokens: 400, system: systemPrompt(kb, ctx), messages: history })
+  const text = await callModel({
+    endpoint: env.LLM_ENDPOINT, model: env.LLM_MODEL, key: env.LLM_API_KEY,
+    system: systemPrompt(kb, ctx), messages: history, maxTokens: 400
   });
-  if (!res.ok) throw new Error('Anthropic ' + res.status);
-  const j = await res.json();
-  return (j.content || []).map((b) => b.text || '').join('').trim();
+  return { text };
 }
 
-// Optional spoken reply for the demo video. Returns a data URL the page can play.
-export async function speak(S, text) {
-  if (!S.elevenLabsKey || !S.elevenLabsVoice) return null;
-  const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + S.elevenLabsVoice, {
-    method: 'POST',
-    headers: { 'xi-api-key': S.elevenLabsKey, 'content-type': 'application/json', accept: 'audio/mpeg' },
-    body: JSON.stringify({ text, model_id: 'eleven_turbo_v2_5' })
-  });
-  if (!res.ok) throw new Error('ElevenLabs ' + res.status);
-  const buf = new Uint8Array(await res.arrayBuffer());
-  let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-  return 'data:audio/mpeg;base64,' + btoa(s);
+// TODO(hackathon): call the provider we're given. See to-do.md for sample request formats.
+// Must return the reply as a plain string.
+async function callModel({ endpoint, model, key, system, messages, maxTokens }) {
+  throw new Error('callModel not implemented yet');
 }
 
 export { knowledge };

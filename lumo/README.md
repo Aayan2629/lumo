@@ -9,11 +9,29 @@ Microburbs Hackathon, Task 3: show Microburbs facts beside the listing a buyer i
 ## Install (2 minutes)
 
 1. Open `chrome://extensions` and turn on **Developer mode** (top right).
-2. Click **Load unpacked** and pick this `lumo` folder.
-3. The setup page opens. Fill in You and Places (30 seconds).
-4. Click **Try it on real Bondi rentals** and open any listing. Bondi works on the free key; your Microburbs key unlocks every suburb.
+2. Copy `lumo/.env.example` to `lumo/.env` and fill in the keys you have (see **Keys** below). Lumo still runs with an empty file.
+3. Click **Load unpacked** and pick this `lumo` folder.
+4. The setup page opens. Fill in You and Places (30 seconds).
+5. Click **Try it on real Bondi rentals** and open any listing. Bondi works on the free key; your Microburbs key unlocks every suburb.
 
 Pin Lumo to the toolbar. Clicking the icon opens or closes the panel. On a page that isn't a listing, it opens real Bondi rentals on Domain.
+
+### Keys
+
+Every API key lives in `lumo/.env`, which git ignores. `lumo/.env.example` shows the layout: `LLM_API_KEY`, `LLM_MODEL`, `LLM_ENDPOINT`, `MICROBURBS_KEY` (`test` = the free sandbox), `GOOGLE_MAPS_KEY`, `TFNSW_KEY`, `MAPILLARY_TOKEN`. After editing it, reload Lumo in `chrome://extensions`. Settings → Data shows which keys are loaded, never their values. Anyone with the extension folder can read the file, so don't share a build that has real keys in it.
+
+### Voice
+
+On a listing, ask Lumo out loud. The panel opens on the chat tab and your words are typed into the chat box as you speak. Nothing is sent until you press Enter.
+
+| Keys | What it does |
+|---|---|
+| ⌥1 (hold) | Push to talk: listens while you hold the keys. |
+| ⌥2 (tap) | Tap to start, tap again to stop. It doesn't stop by itself when you pause. |
+| Esc | Stops listening and keeps the words. |
+| Mic button | Same as ⌥2. |
+
+If Lumo hasn't read the page yet, a shortcut starts the scan and listens straight away; a question sent before the checks finish is answered when they're ready. The first time, Lumo opens an **Allow microphone** tab: allow it once and it works on every listing site. You can open the same tab from Settings → Data → **Enable microphone**, and change both shortcuts there. Speech recognition is Chrome's own (`en-AU`) and needs internet access. Lumo doesn't speak its answers.
 
 Tested on live Domain listings, to rent and for sale (Nov 2026): price or price guide, beds, baths, parking, description, features, coordinates and photos are read from the page's own data. On Domain, "rent or buy" comes from the listing's `mode` ("buy" / "rent"); its `listingType` says "rent" even on homes for sale, so Lumo doesn't trust it. realestate.com.au is read from its embedded listing data, and if that changes, from the tab title ("House for Sale"), the price line and the summary strip. It couldn't be opened from the test browser, so check one listing there yourself.
 
@@ -59,9 +77,9 @@ Change the defaults in Settings → Investor.
 | Panel | Verdict, asking rent against similar homes and the yearly difference, Google Maps and Street View, then Checks, Ask Lumo and Saved. Drag it by the top bar. The minus button folds it back into the dock. The eye hides all marks for a clean page. |
 | Your places | Time to uni or work from every listing, hours a week, and a button that opens the trip in Google Maps. |
 | Check detail | The quote from the ad, proof (a mini map, bars or rent history), what it means, next step, follow-up questions. |
-| Ask Lumo | Chat about this home. Answers from rules, or from Claude when you add a key. Optional voice. |
+| Ask Lumo | Chat about this home, typed or spoken (⌥1 / ⌥2). Answers come from an LLM using the knowledge files and the checks. With no LLM key in `.env`, it replies "Insert key". |
 | Saved | Heart a home to keep it with its checks: the swipe shortlist, inside the browser. |
-| Settings | Your profile (budget, car, gym, supermarket, what matters), places, Renter ID card and data keys. |
+| Settings | Your profile (budget, car, gym, supermarket, what matters), places, Renter ID card, which `.env` keys are loaded, microphone and voice shortcuts. |
 
 ## Data and APIs
 
@@ -118,11 +136,12 @@ The photos are stand-ins. Swap them in `demo/img/` before you post anything publ
 
 ```
 manifest.json          Chrome MV3 manifest
-background.js          Service worker: holds keys, calls APIs, caches
+background.js          Service worker: reads keys from .env, calls APIs, caches
 lib/store.js           Settings, profile, cache
+lib/env.js             Loads lumo/.env
 lib/providers.js       Microburbs, OpenStreetMap, your rent model
 lib/invest.js          Investor data: value, rent, market, sale history, supply
-lib/ai.js              Claude answers, ElevenLabs voice
+lib/ai.js              LLM answers (provider set on hackathon day)
 content/core.js        Shared helpers, icons, logo
 content/extract.js     Reads the listing: page data first, then the visible page
 content/rules.js       Turns facts into checks (rentals)
@@ -130,10 +149,12 @@ content/invest.js      Investor mode: sale price, weekly sums, score, checks
 content/anchor.js      Finds claim words, pins marks to text and photos
 content/ui.css.js      The glass look
 content/ui.js          Pill, marks, bubble, panel
+content/voice.js       Voice input: shortcuts, mic button, live words in the chat box
 content/chat.js        Ask Lumo
 content/main.js        Starts Lumo, follows page changes
 content/highlights.css Text mark colours
 options/               Setup and settings
+mic/                   Hidden speech recognition frame and the Allow microphone tab
 knowledge/             What Lumo knows
 demo/                  Demo listing, sample facts, offline data snapshot
 docs/research/         Design and technical research notes
@@ -143,6 +164,6 @@ icons/, fonts/         Beam icon, Schibsted Grotesk
 ## Rules we kept
 
 - Lumo only reads the page you have open. It doesn't crawl or scrape other pages.
-- No API keys in this folder. Keys live in your browser's storage.
+- No API keys in git. Keys live in `lumo/.env`, which is git-ignored, and never reach the page.
 - Renter ID documents are a checklist only. Nothing is uploaded.
 - Every number comes from a source named under the check. When data is missing, the check says "not checked yet" instead of guessing.

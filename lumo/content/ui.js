@@ -16,6 +16,8 @@
   let hover = null, raf = 0;
   let view = 'checks', detail = null, open = false, showGrey = false, marksOn = true;
   let chat = [], busy = false;
+  let gen = 0;                  // bumped by destroy(), so an answer for an old page is dropped
+  let dataReady = null, dataResolve = null;   // a question asked while Lumo is still reading waits on this
   let pos = {};                 // remembered dock and panel positions
   const edges = new Map();      // photo mark -> element
 
@@ -79,7 +81,8 @@
     placeDock();
     setTimeout(() => { if (dock && !D) destroy(); }, 4000);
   }
-  const onKey = (e) => { if (e.key === 'Escape' && open) toggle(false); };
+  // While the mic is on, Esc stops it (content/voice.js) and must not close the panel.
+  const onKey = (e) => { if (e.key === 'Escape' && open && !LUMO.voice?.listening) toggle(false); };
   const onResize = () => { placeDock(); if (open) placePanel(); schedule(); };
 
   function destroy() {
@@ -87,7 +90,8 @@
     clearInterval(LUMO._tick);
     removeEventListener('pointermove', onMove); removeEventListener('click', onClick, true);
     removeEventListener('scroll', schedule, true); removeEventListener('resize', onResize); removeEventListener('keydown', onKey);
-    LUMO.unpaint(); host.remove(); host = null; edges.clear(); D = null; open = false; chat = []; detail = null; view = 'checks'; chip = null;
+    LUMO.voice?.reset();
+    LUMO.unpaint(); host.remove(); host = null; edges.clear(); D = null; open = false; chat = []; busy = false; gen++; detail = null; view = 'checks'; chip = null;
   }
 
   // Is the page itself dark? Look at the first solid background from body upwards.
@@ -194,6 +198,7 @@
   function render(data) {
     mount();
     D = data;
+    if (dataResolve) { dataResolve(); dataResolve = dataReady = null; }
     if (marksOn) LUMO.paint(D.marks);
     // Dock
     const n = LUMO.counts(D.checks);
@@ -357,6 +362,7 @@
   // ---------- panel ----------
   function toggle(v) {
     open = v ?? !open;
+    if (!open) LUMO.voice?.stop();
     if (open) { renderPanel(); placePanel(); }
     panel.classList.toggle('open', open);
     panel.setAttribute('aria-hidden', String(!open));
@@ -419,12 +425,26 @@
   }
   function sideGrips() {}
 
+  // Re-rendering rebuilds the chat box: keep what was typed (or dictated) in it.
   function renderPanel() {
+    const draft = panel.querySelector('.composer input')?.value || '';
+    draw();
+    const inp = panel.querySelector('.composer input');
+    if (inp && draft) { inp.value = draft; panel.querySelector('.composer .send').disabled = !draft.trim(); }
+    LUMO.voice?.paint();
+  }
+  function draw() {
     if (!D) {
       // Opened before the data arrived: show that Lumo is working, never an empty panel.
-      panel.innerHTML = `<header class="top"><span class="grip"></span>${LUMO.logo(32)}<div class="addr"><b>Reading this home</b><span>Checking rent, noise, transport and more</span></div>
-        <button class="round fold" aria-label="Minimise">${I('fold', 16)}</button></header>
-        <div class="skel"><i></i><i></i><i></i><i></i><p>Usually a few seconds.</p></div>`;
+      // From a voice shortcut the chat opens straight away; questions wait for the checks.
+      const head = `<header class="top"><span class="grip"></span>${LUMO.logo(32)}<div class="addr"><b>Reading this home</b><span>Checking rent, noise, transport and more</span></div>
+        <button class="round fold" aria-label="Minimise">${I('fold', 16)}</button></header>`;
+      if (view === 'ask') {
+        panel.innerHTML = head + `<div class="body">${askView()}</div>${composer()}`;
+        wirePanel(); addGrips(); renderChat();
+        return;
+      }
+      panel.innerHTML = head + `<div class="skel"><i></i><i></i><i></i><i></i><p>Usually a few seconds.</p></div>`;
       panel.querySelector('.fold').onclick = () => toggle(false);
       draggable(panel, panel.querySelector('.top'), 'panel');
       return;
@@ -876,8 +896,8 @@
   }
 
   function composer() {
-    const mic = D.state.settings.voice && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    return `<form class="composer"><input type="text" placeholder="Ask about this home" aria-label="Ask Lumo">${mic ? `<button type="button" class="mic" aria-label="Speak">${I('mic', 16)}</button>` : ''}<button class="send" aria-label="Send" disabled>${I('send', 15)}</button></form>`;
+    const mic = LUMO.voice?.supported;
+    return `<form class="composer"><input type="text" placeholder="Ask about this home" aria-label="Ask Lumo">${mic ? `<button type="button" class="mic" aria-label="Speak" aria-pressed="false" title="Speak (or hold ⌥1, tap ⌥2)">${I('mic', 16)}</button>` : ''}<button class="send" aria-label="Send" disabled>${I('send', 15)}</button></form>`;
   }
 
   function wirePanel() {
@@ -910,8 +930,8 @@
     if (f) {
       const inp = f.querySelector('input'), send = f.querySelector('.send');
       inp.oninput = () => (send.disabled = !inp.value.trim());
-      f.onsubmit = (e) => { e.preventDefault(); const q = inp.value.trim(); if (q && !busy) { inp.value = ''; send.disabled = true; ask(q); } };
-      const mic = f.querySelector('.mic'); if (mic) mic.onclick = () => listen(mic, inp, f);
+      f.onsubmit = (e) => { e.preventDefault(); const q = inp.value.trim(); if (q && !busy) { LUMO.voice?.abandon(); inp.value = ''; send.disabled = true; ask(q); } };
+      const mic = f.querySelector('.mic'); if (mic) mic.onclick = () => LUMO.voice.toggle();
       setTimeout(() => inp.focus({ preventScroll: true }), 60);
     }
   }
@@ -937,12 +957,12 @@
   function renderChat() {
     const box = panel.querySelector('.chat');
     if (!box) return;
-    if (!chat.length) chat.push({ role: 'lumo', text: LUMO.opening(D) });
+    if (!chat.length && D) chat.push({ role: 'lumo', text: LUMO.opening(D), opening: true });
     if (!box.querySelector('.msgs')) box.innerHTML = '<div class="msgs"></div><div class="tail"></div>';
     const list = box.querySelector('.msgs');
     // Add only the messages not drawn yet, so maps already in the chat don't reload.
     for (let i = list.children.length; i < chat.length; i++) {
-      const m = chat[i], c = m.visual && D.checks.find((x) => x.id === m.visual);
+      const m = chat[i], c = m.visual && D && D.checks.find((x) => x.id === m.visual);
       const el = document.createElement('div');
       el.className = 'turn ' + m.role;
       el.innerHTML = `<div class="msg ${m.role}">${m.role === 'lumo' ? LUMO.logo(22) : ''}<p>${E(m.text)}</p></div>` +
@@ -953,7 +973,7 @@
     }
     const tail = box.querySelector('.tail');
     tail.innerHTML = (busy ? `<div class="msg lumo typing">${LUMO.logo(22)}<p><i></i><i></i><i></i></p></div>` : '') +
-      (!busy && chat.length < 3 ? `<div class="starters">${LUMO.starters(D).map((q) => `<button class="starter q">${I('spark', 14)}${E(q)}</button>`).join('')}</div>` : '');
+      (D && !busy && chat.length < 3 ? `<div class="starters">${LUMO.starters(D).map((q) => `<button class="starter q">${I('spark', 14)}${E(q)}</button>`).join('')}</div>` : '');
     tail.querySelectorAll('.starter').forEach((b) => (b.onclick = () => ask(b.textContent)));
     // A new answer scrolls so its question sits at the top, with the map below it.
     const body = panel.querySelector('.body'), last = list.lastElementChild;
@@ -962,19 +982,37 @@
     } else body.scrollTop = body.scrollHeight;
   }
   async function ask(q) {
+    const g = gen;
     chat.push({ role: 'me', text: q }); busy = true; renderChat();
+    // Asked while Lumo is still reading the page: answer once the checks are ready.
+    if (!D) { if (!dataReady) dataReady = new Promise((r) => (dataResolve = r)); await dataReady; }
+    if (g !== gen) return;
     const text = await LUMO.reply(q, D, chat);
+    if (g !== gen) return;
     busy = false; chat.push({ role: 'lumo', text, visual: LUMO.visualFor(q, D) }); renderChat();
-    if (D.state.settings.voice) LUMO.say(text);
   }
-  function listen(btn, inp, form) {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const rec = new SR(); rec.lang = 'en-AU'; rec.interimResults = true;
-    btn.classList.add('live');
-    rec.onresult = (e) => { inp.value = [...e.results].map((r) => r[0].transcript).join(''); form.querySelector('.send').disabled = !inp.value.trim(); };
-    rec.onend = () => { btn.classList.remove('live'); if (inp.value.trim()) form.requestSubmit(); };
-    rec.start();
+  // A line from Lumo in the chat that is not part of the conversation sent to the model.
+  function chatNote(text) {
+    if (!host) return;
+    if (!chat.length && D) chat.push({ role: 'lumo', text: LUMO.opening(D), opening: true });
+    chat.push({ role: 'lumo', text, note: true });
+    if (open && view === 'ask') renderChat();
   }
 
-  LUMO.ui = { mount, destroy, scanning, render, note, toggle: () => host && toggle(), get open() { return open; } };
+  // ---------- for content/voice.js ----------
+  // Open the panel on the chat tab and hand back the chat box (null until the panel has one).
+  function openChat() {
+    mount();
+    view = 'ask'; detail = null;
+    if (!open) toggle(true); else renderPanel();
+    return chatBox();
+  }
+  function chatBox() {
+    const f = open && panel?.querySelector('.composer');
+    return f ? { form: f, input: f.querySelector('input'), send: f.querySelector('.send'), mic: f.querySelector('.mic') } : null;
+  }
+  // The mic frame lives in Lumo's closed shadow root, out of the page's reach.
+  function attachFrame(el) { mount(); root.appendChild(el); }
+
+  LUMO.ui = { mount, destroy, scanning, render, note, chatNote, openChat, composer: chatBox, attachFrame, toggle: () => host && toggle(), get open() { return open; } };
 })();
