@@ -169,6 +169,8 @@ $('#csv').onchange = async (e) => {
 chrome.storage.local.get('rentcsv').then(({ rentcsv }) => { if (rentcsv) { $('#csvStatus').textContent = Object.keys(rentcsv).length.toLocaleString() + ' homes loaded'; $('#csvStatus').className = 'status ok'; } });
 
 $('#demo').onclick = () => chrome.tabs.create({ url: 'https://www.domain.com.au/rent/bondi-nsw-2026/?ptype=apartment-unit-flat' });
+// Real homes for sale in Bondi, a suburb the free Microburbs key covers. Open any one and Lumo switches to Investor mode.
+$('#demoSale').onclick = () => chrome.tabs.create({ url: 'https://www.domain.com.au/sale/bondi-nsw-2026/' });
 $('#offline').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/listing.html') });
 $('#offlineSale').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/sale.html') });
 
