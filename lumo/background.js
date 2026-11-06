@@ -1,11 +1,12 @@
 // Lumo service worker. The page talks to it with chrome.runtime.sendMessage.
-// It holds the API keys, calls the data sources, and never exposes keys to the page.
+// It reads the API keys from lumo/.env, calls the data sources, and never exposes keys to the page.
 import { getAll } from './lib/store.js';
 import { gatherFacts } from './lib/providers.js';
-import { askLLM, speak, knowledge } from './lib/ai.js';
+import { askLLM, knowledge } from './lib/ai.js';
+import { loadEnv, envSettings } from './lib/env.js';
 
 const LISTING_SITES = /^https:\/\/www\.(domain|realestate)\.com\.au\//;
-const CONTENT = ["content/core.js", "content/extract.js", "content/rules.js", "content/invest.js", "content/anchor.js", "content/ui.css.js", "content/ui.js", "content/chat.js", "content/main.js"];
+const CONTENT = ["content/core.js", "content/extract.js", "content/rules.js", "content/invest.js", "content/anchor.js", "content/ui.css.js", "content/ui.js", "content/voice.js", "content/chat.js", "content/main.js"];
 
 // Chrome only adds content scripts to pages loaded after the extension. Add Lumo to tabs already open.
 async function inject(tabId) {
@@ -35,17 +36,12 @@ const handlers = {
   async state() { return getAll(); },
   async knowledge() { return knowledge(); },
   async facts({ listing }) {
-    const { settings, profile } = await getAll();
-    return gatherFacts(listing, settings, profile);
+    const [{ settings, profile }, env] = await Promise.all([getAll(), loadEnv()]);
+    return gatherFacts(listing, { ...settings, ...envSettings(env) }, profile);
   },
-  async ask({ ctx, history }) {
-    const { settings } = await getAll();
-    return { text: await askLLM(settings, ctx, history) };
-  },
-  async speak({ text }) {
-    const { settings } = await getAll();
-    return { audio: await speak(settings, text) };
-  },
+  async ask({ ctx, history }) { return askLLM(await loadEnv(), ctx, history); },
+  // Content scripts can't open extension pages, so the page asks us to open the mic setup tab.
+  async openMicSetup() { await chrome.tabs.create({ url: chrome.runtime.getURL('mic/allow.html') }); return true; },
   async save({ item }) {
     const { saved } = await getAll();
     const next = [item, ...saved.filter((s) => s.url !== item.url)].slice(0, 60);

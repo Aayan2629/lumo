@@ -104,9 +104,9 @@
   <!-- Data -->
   <section class="tab" data-tab="data" hidden>
     <div class="card glass">
-      <div class="field"><span>Microburbs API key</span><b class="status" id="mbStatus"></b></div>
-      <div class="row"><input id="microburbsKey" placeholder="test" spellcheck="false"><button class="ghost" id="mbTest">Test</button></div>
-      <p class="hint">"test" uses the free sandbox: Bondi and a few other suburbs only. Paste your hackathon key for all of Sydney.</p>
+      <div class="field"><span>Keys (from .env)</span></div>
+      <div class="envkeys" id="envKeys"></div>
+      <p class="hint">Edit lumo/.env and reload the extension. Start from lumo/.env.example. MICROBURBS_KEY=test uses the free sandbox: Bondi and a few other suburbs only.</p>
     </div>
     <div class="card glass">
       <div class="field"><span>Your rent model</span><b class="status" id="csvStatus"></b></div>
@@ -115,32 +115,18 @@
       <p class="hint">Use the same CSV you submit: gnaf_id, rent_with_car_space, rent_without_car_space. Lumo then shows your model's fair rent.</p>
     </div>
     <div class="card glass">
-      <div class="field"><span>Lumo's voice (optional)</span></div>
-      <div class="field sub"><span>Anthropic API key</span><b class="status" data-st="anthropicKey"></b></div>
-      <input id="anthropicKey" type="password" placeholder="sk-ant-…" spellcheck="false">
-      <input id="anthropicModel" placeholder="claude-haiku-5-5" spellcheck="false">
-      <p class="hint">With a key, Lumo answers in its own words using its knowledge files. Without one, it answers from its rules.</p>
-    </div>
-    <div class="card glass">
-      <div class="field"><span>More data (optional)</span></div>
-      <div class="field sub"><span>Transport for NSW</span><b class="status" data-st="tfnswKey"></b></div>
-      <input id="tfnswKey" type="password" placeholder="Real train and bus times, night ride home" spellcheck="false">
-      <div class="field sub"><span>Mapillary</span><b class="status" data-st="mapillaryToken"></b></div>
-      <input id="mapillaryToken" type="password" placeholder="MLY|… street photos" spellcheck="false">
-      <div class="field sub"><span>Google Maps</span><b class="status" data-st="googleKey"></b></div>
-      <input id="googleKey" type="password" placeholder="Optional, needs billing" spellcheck="false">
-      <div class="field sub"><span>ElevenLabs</span><b class="status" data-st="elevenLabsKey"></b></div>
-      <input id="elevenLabsKey" type="password" placeholder="Spoken replies" spellcheck="false">
-      <input id="elevenLabsVoice" placeholder="ElevenLabs voice ID" spellcheck="false">
-      <p class="hint">Each key is checked as you paste it. Green means Lumo is using it.</p>
+      <div class="field"><span>Microphone</span><b class="status" id="micStatus"></b></div>
+      <div class="row" style="margin-top:10px"><button class="ghost" id="micSetup">Enable microphone</button></div>
+      <div class="field sub"><span>Hold to talk</span><input class="keyrec" id="sc-ptt" readonly spellcheck="false" aria-label="Hold to talk shortcut"></div>
+      <div class="field sub"><span>Tap to talk</span><input class="keyrec" id="sc-toggle" readonly spellcheck="false" aria-label="Tap to talk shortcut"></div>
+      <p class="hint"><span id="scMsg">Click a box and press the new keys.</span> <a id="scReset" style="color:inherit;cursor:pointer;text-decoration:underline">Reset</a>. Shortcuts work on a listing page. Esc stops listening. New shortcuts apply when the page reloads.</p>
     </div>
     <div class="card glass">
       <label class="field toggle"><span>Glow on photos</span><input type="checkbox" id="photoEdges"><i></i></label>
       <label class="field toggle"><span>Light up the ad when it opens</span><input type="checkbox" id="introScan"><i></i></label>
-      <label class="field toggle"><span>Speak and listen</span><input type="checkbox" id="voice"><i></i></label>
       <label class="field toggle"><span>Use OpenStreetMap when data is missing</span><input type="checkbox" id="useOsm"><i></i></label>
     </div>
-    <p class="hint center">Keys stay in this browser. Lumo sends them only to the service they belong to.</p>
+    <p class="hint center">Keys stay in lumo/.env on this computer. Lumo sends them only to the service they belong to, never to the page.</p>
   </section>
 
   <div class="demos">

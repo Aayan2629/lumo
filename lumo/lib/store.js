@@ -1,21 +1,17 @@
 // Settings, profile and a small cache, all kept in chrome.storage.local.
 // Nothing here leaves the browser unless a provider sends it to an API you switched on.
 
+// Keys are not settings: they live in lumo/.env (see lib/env.js).
 export const DEFAULT_SETTINGS = {
-  microburbsKey: 'test',          // 'test' = free public sandbox (only some suburbs). Paste your own key in Settings.
   rentModelUrl: '',               // Your rent model endpoint (Task 4). POST listing -> { with, without }
-  anthropicKey: '',               // Optional. Lets Lumo answer in its own words.
-  anthropicModel: 'claude-haiku-5-5',
-  googleKey: '',
-  mapillaryToken: '',             // Optional. Free street photos (mapillary.com/developer).                  // Optional. Real transit times to your places (Google Routes API).
-  tfnswKey: '',                   // Optional. Real commute times (Trip Planner API).
-  elevenLabsKey: '',              // Optional. Voice replies for the demo video.
-  elevenLabsVoice: '',
   useOsm: true,                   // Free OpenStreetMap lookups when Microburbs has no data
   photoEdges: true,
   introScan: true,
-  voice: false
+  shortcuts: { ptt: 'Alt+Digit1', toggle: 'Alt+Digit2' }   // Voice: hold to talk, tap to talk
 };
+
+// Old fields that held keys or spoken replies. Dropped from storage so they never reach a page.
+const OLD = ['microburbsKey', 'anthropicKey', 'anthropicModel', 'googleKey', 'mapillaryToken', 'tfnswKey', 'elevenLabsKey', 'elevenLabsVoice', 'voice'];
 
 export const DEFAULT_PROFILE = {
   name: '',
@@ -36,8 +32,13 @@ export const DEFAULT_PROFILE = {
 
 export async function getAll() {
   const r = await chrome.storage.local.get(['settings', 'profile', 'saved']);
+  const stored = { ...(r.settings || {}) };
+  if (OLD.some((k) => k in stored)) {
+    for (const k of OLD) delete stored[k];
+    await chrome.storage.local.set({ settings: stored });
+  }
   return {
-    settings: { ...DEFAULT_SETTINGS, ...(r.settings || {}) },
+    settings: { ...DEFAULT_SETTINGS, ...stored, shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...(stored.shortcuts || {}) } },
     profile: { ...DEFAULT_PROFILE, ...(r.profile || {}) },
     saved: r.saved || []
   };

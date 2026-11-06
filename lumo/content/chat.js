@@ -1,5 +1,5 @@
-// Ask Lumo. With an Anthropic key, answers come from the model (see lib/ai.js) using the knowledge files.
-// Without one, Lumo answers from the checks and facts below. It never makes up a number.
+// Ask Lumo. Answers come from the LLM (see lib/ai.js) using the knowledge files, the listing and the checks.
+// With no LLM key in lumo/.env, every question gets "Insert key".
 (() => {
   const M = LUMO.money;
 
@@ -54,6 +54,7 @@
   }
 
   // Rule answers: match the question to what Lumo knows, answer in two or three sentences.
+  // Not called any more (LUMO.reply always asks the LLM). Kept as an offline backup. It never makes up a number.
   function rules(q, D) {
     if (D.mode === 'invest') { const a = investAnswer(q, D); if (a) return a; }
     const { L, F, checks } = D, s = q.toLowerCase(), P = D.state.profile, S = F.sample || {};
@@ -140,27 +141,19 @@
   };
 
   LUMO.reply = async (q, D, chat) => {
-    if (D.state.settings.anthropicKey) {
-      const ctx = {
-        mode: D.mode,
-        profile: D.state.profile,
-        numbers: D.mode === 'invest' ? LUMO.investModel(D.L, D.F, D.state.profile) : undefined,
-        listing: { address: D.L.address, price: D.L.price, priceText: D.L.priceText, forSale: D.mode === 'invest', beds: D.L.beds, baths: D.L.baths, parking: D.L.parking, type: D.L.type, description: (D.L.description || '').slice(0, 2500) },
-        checks: D.checks.map(({ id, level, title, line, meaning, next, sources, sample }) => ({ id, level, title, line, meaning, next, sources, sample })),
-        facts: { ...D.F, sample: D.F.sample }
-      };
-      const history = chat.filter((m, i) => i > 0).map((m) => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text }));
-      const r = await LUMO.send('ask', { ctx, history });
-      if (r && r.text) return r.text;
-    }
-    await new Promise((r) => setTimeout(r, 450));   // a short beat feels like thought
-    return rules(q, D);
-  };
-
-  // Speak a reply: ElevenLabs if set up, otherwise the browser's own voice.
-  LUMO.say = async (text) => {
-    const r = await LUMO.send('speak', { text });
-    if (r && r.audio) return new Audio(r.audio).play().catch(() => {});
-    try { const u = new SpeechSynthesisUtterance(text); u.lang = 'en-AU'; u.rate = 1.04; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch {}
+    const ctx = {
+      mode: D.mode,
+      profile: D.state.profile,
+      numbers: D.mode === 'invest' ? LUMO.investModel(D.L, D.F, D.state.profile) : undefined,
+      listing: { address: D.L.address, price: D.L.price, priceText: D.L.priceText, forSale: D.mode === 'invest', beds: D.L.beds, baths: D.L.baths, parking: D.L.parking, type: D.L.type, description: (D.L.description || '').slice(0, 2500) },
+      checks: D.checks.map(({ id, level, title, line, meaning, next, sources, sample }) => ({ id, level, title, line, meaning, next, sources, sample })),
+      facts: { ...D.F, sample: D.F.sample }
+    };
+    // Lumo's opening line and its notes aren't part of the conversation (and a model wants a user turn first).
+    const history = chat.filter((m) => !m.opening && !m.note).map((m) => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text }));
+    const r = await LUMO.send('ask', { ctx, history });
+    if (r?.noKey) return 'Insert key';
+    if (r?.text) return r.text;
+    return "Lumo couldn't reach the model.";
   };
 })();

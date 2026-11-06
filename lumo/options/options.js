@@ -1,5 +1,6 @@
 // Lumo settings and onboarding. Everything saves as you go.
 import { getAll, DEFAULT_SETTINGS } from '../lib/store.js';
+import { loadEnv, ENV_KEYS } from '../lib/env.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -137,22 +138,17 @@ function drawId() {
 drawId();
 
 // ---------- Data ----------
-for (const k of ['microburbsKey', 'rentModelUrl', 'anthropicKey', 'anthropicModel', 'googleKey', 'mapillaryToken', 'tfnswKey', 'elevenLabsKey', 'elevenLabsVoice']) {
-  const el = $('#' + k); el.value = S[k] ?? ''; el.oninput = () => { S[k] = el.value.trim() || (k === 'microburbsKey' ? DEFAULT_SETTINGS.microburbsKey : ''); save(); };
-}
-for (const k of ['photoEdges', 'introScan', 'voice', 'useOsm']) {
+{ const el = $('#rentModelUrl'); el.value = S.rentModelUrl ?? ''; el.oninput = () => { S.rentModelUrl = el.value.trim(); save(); }; }
+for (const k of ['photoEdges', 'introScan', 'useOsm']) {
   const el = $('#' + k); el.checked = !!S[k]; el.onchange = () => { S[k] = el.checked; save(); };
 }
+// Keys come from lumo/.env. Show which are there, never their values.
+loadEnv().then((env) => {
+  $('#envKeys').innerHTML = ENV_KEYS.map((k) => `<div class="field sub"><span><code>${k}</code></span><b class="status ${env[k] ? 'ok' : ''}">${env[k] ? 'Loaded' : 'Missing'}</b></div>`).join('');
+});
 // A custom rent model URL needs permission to reach that host.
 $('#rentModelUrl').onchange = async (e) => {
   try { const u = new URL(e.target.value); await chrome.permissions.request({ origins: [u.origin + '/*'] }); } catch {}
-};
-$('#mbTest').onclick = async () => {
-  const st = $('#mbStatus'); st.className = 'status'; st.textContent = 'Checking';
-  try {
-    const r = await fetch('https://api.microburbs.com.au/v1/suburbs/Bondi/market/median-rent', { headers: { Authorization: 'Bearer ' + (S.microburbsKey || 'test') } });
-    st.textContent = r.ok ? 'Connected' : 'Key not accepted (' + r.status + ')'; st.classList.add(r.ok ? 'ok' : 'bad');
-  } catch { st.textContent = 'No connection'; st.classList.add('bad'); }
 };
 // Import the hackathon CSV: gnaf_id, rent_with_car_space, rent_without_car_space
 $('#csv').onchange = async (e) => {
@@ -188,30 +184,40 @@ $('#rate').oninput = (e) => { V.rate = +e.target.value; inv(); save(); };
 $('#mgmt').oninput = (e) => { V.mgmt = +e.target.value; inv(); save(); };
 $$('#io button').forEach((b) => (b.onclick = () => { V.io = b.dataset.v === '1'; inv(); save(); }));
 
-// Every key gets a live status next to its name: checked when the page opens and again as you paste.
-// Each test is a free call that costs nothing.
-const TESTS = {
-  tfnswKey: (k) => fetch('https://api.transport.nsw.gov.au/v1/tp/stop_finder?outputFormat=rapidJSON&type_sf=any&name_sf=Central%20Station&coordOutputFormat=EPSG%3A4326&TfNSWSF=true&version=10.2.1.42', { headers: { Authorization: 'apikey ' + k } }),
-  mapillaryToken: (k) => fetch('https://graph.mapillary.com/images?limit=1&fields=id&bbox=151.270,-33.893,151.276,-33.888&access_token=' + encodeURIComponent(k)),
-  anthropicKey: (k) => fetch('https://api.anthropic.com/v1/models?limit=1', { headers: { 'x-api-key': k, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } }),
-  elevenLabsKey: (k) => fetch('https://api.elevenlabs.io/v1/user', { headers: { 'xi-api-key': k } }),
-  googleKey: null   // no free test call, so it just shows Saved
-};
-async function checkKey(k) {
-  const el = document.querySelector(`[data-st="${k}"]`); if (!el) return;
-  const v = S[k]; el.className = 'status';
-  if (!v) { el.textContent = 'Not added'; return; }
-  if (!TESTS[k]) { el.textContent = 'Saved'; return; }
-  el.textContent = 'Checking';
-  try {
-    const r = await TESTS[k](v);
-    if (S[k] !== v) return;   // changed while checking
-    el.textContent = r.ok ? 'Connected' : r.status === 401 || r.status === 403 ? 'Key not accepted' : 'Error ' + r.status;
-    el.classList.add(r.ok ? 'ok' : 'bad');
-  } catch { el.textContent = 'No connection'; el.classList.add('bad'); }
+// ---------- Voice ----------
+// The mic is approved once for Lumo on its own page (mic/allow.html), then works on every listing.
+$('#micSetup').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('mic/allow.html') });
+async function micStatus() {
+  const st = $('#micStatus');
+  const show = (state) => { st.textContent = state === 'granted' ? 'Allowed' : 'Not allowed yet'; st.className = 'status ' + (state === 'granted' ? 'ok' : state === 'denied' ? 'bad' : ''); };
+  try { const p = await navigator.permissions.query({ name: 'microphone' }); show(p.state); p.onchange = () => show(p.state); }
+  catch { show('prompt'); }
 }
-const timers = {};
-for (const k of Object.keys(TESTS)) {
-  checkKey(k);
-  $('#' + k).addEventListener('input', () => { clearTimeout(timers[k]); timers[k] = setTimeout(() => checkKey(k), 700); });
+micStatus();
+
+// Shortcuts are stored as 'Alt+Shift+Digit3' (modifiers, then KeyboardEvent.code) and shown Mac style.
+const SC = (S.shortcuts = { ...DEFAULT_SETTINGS.shortcuts, ...(S.shortcuts || {}) });
+const MODS = [['Ctrl', '⌃'], ['Alt', '⌥'], ['Shift', '⇧'], ['Meta', '⌘']];
+const keyName = (code) => code.replace(/^Digit|^Key|^Numpad/, '').replace('Arrow', '');
+const pretty = (sc) => { const p = sc.split('+'), code = p.pop(); return MODS.filter(([m]) => p.includes(m)).map(([, g]) => g).join('') + keyName(code); };
+const scMsg = (t, bad) => { const m = $('#scMsg'); m.textContent = t; m.style.color = bad ? '#d70015' : ''; };
+function drawShortcuts() { for (const k of ['ptt', 'toggle']) $('#sc-' + k).value = pretty(SC[k]); }
+for (const k of ['ptt', 'toggle']) {
+  const el = $('#sc-' + k);
+  el.onfocus = () => { el.value = 'Press keys…'; scMsg('Press the new combination, with ⌥, ⌃ or ⌘.'); };
+  el.onblur = () => { drawShortcuts(); };
+  el.onkeydown = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (['Alt', 'Control', 'Shift', 'Meta'].includes(e.key)) return;   // wait for the real key
+    if (e.code === 'Escape' || e.code === 'Tab') { el.blur(); return; }
+    const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Meta'].filter(Boolean);
+    const sc = [...mods, e.code].join('+');
+    if (!e.ctrlKey && !e.altKey && !e.metaKey) return scMsg('Add ⌥, ⌃ or ⌘ so typing in the page is not caught.', true);
+    if (e.metaKey && /^Digit\d$/.test(e.code)) return scMsg('⌘ and a number switch Chrome tabs. Pick another.', true);
+    const other = k === 'ptt' ? 'toggle' : 'ptt';
+    if (sc === SC[other]) return scMsg('That is already the other shortcut.', true);
+    SC[k] = sc; save(); scMsg('Saved. Reload the listing to use it.'); el.blur();
+  };
 }
+$('#scReset').onclick = () => { Object.assign(SC, DEFAULT_SETTINGS.shortcuts); save(); drawShortcuts(); scMsg('Back to ⌥1 and ⌥2.'); };
+drawShortcuts();

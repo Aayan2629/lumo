@@ -127,3 +127,6 @@ input[type=range] { width: 100%; accent-color: #1d1d1f; }
 
 .field.sub { margin: 14px 0 6px; }
 .field.sub span { font-weight: 500; }
+.envkeys code { font: 500 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+input.keyrec { width: 120px; height: 36px; border-radius: 10px; border: 0; text-align: center; background: var(--well); font-weight: 600; cursor: pointer; outline: 0; caret-color: transparent; }
+input.keyrec:focus { box-shadow: 0 0 0 2px var(--blue); }

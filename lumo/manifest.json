@@ -32,10 +32,8 @@
     "https://www.domain.com.au/*",
     "https://api.microburbs.com.au/*",
     "https://overpass-api.de/*",
-    "https://api.anthropic.com/*",
     "https://api.transport.nsw.gov.au/*",
     "https://routes.googleapis.com/*",
-    "https://api.elevenlabs.io/*",
     "https://routing.openstreetmap.de/*",
     "https://overpass.kumi.systems/*",
     "https://overpass.private.coffee/*",
@@ -66,6 +64,7 @@
         "content/anchor.js",
         "content/ui.css.js",
         "content/ui.js",
+        "content/voice.js",
         "content/chat.js",
         "content/main.js"
       ],
@@ -81,7 +80,8 @@
         "fonts/*.woff2",
         "icons/*.png",
         "knowledge/*.json",
-        "map/*"
+        "map/*",
+        "mic/mic.html"
       ],
       "matches": [
         "https://www.domain.com.au/*",

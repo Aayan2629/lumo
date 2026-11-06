@@ -2,12 +2,22 @@
 (() => {
   if (LUMO.started) return;                 // added twice (manifest + toolbar): run once
   LUMO.started = true;
-  let url = '', run = 0, data = null, mo = null, heal = 0;
+  let url = '', run = 0, data = null, mo = null, heal = 0, reading = 0;
   const log = (...a) => console.info('[Lumo]', ...a);
 
   async function start(fromClick) {
+    reading++;
     try { await run1(fromClick); } catch (e) { console.warn('[Lumo] stopped:', e); LUMO.ui.note && LUMO.ui.note('Lumo hit a problem on this page'); }
+    finally { reading--; }
   }
+  // For voice shortcuts: make sure Lumo is on this page, the same way the toolbar icon does.
+  // False when this isn't a listing. Doesn't restart a scan that is already running.
+  LUMO.ensureStarted = () => {
+    if (data || reading) return true;
+    if (!LUMO.pageKind()) return false;
+    start(true);
+    return true;
+  };
   async function run1(fromClick) {
     const id = ++run;
     LUMO.ui.destroy();

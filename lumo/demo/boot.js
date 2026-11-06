@@ -6,7 +6,7 @@
   const css = document.createElement('link');
   css.rel = 'stylesheet'; css.href = '../content/highlights.css';
   document.head.appendChild(css);
-  for (const f of ['core', 'extract', 'rules', 'invest', 'anchor', 'ui.css', 'ui', 'chat', 'main']) {
+  for (const f of ['core', 'extract', 'rules', 'invest', 'anchor', 'ui.css', 'ui', 'voice', 'chat', 'main']) {
     await new Promise((ok) => { const s = document.createElement('script'); s.src = `../content/${f}.js`; s.onload = s.onerror = ok; document.body.appendChild(s); });
   }
 })();
