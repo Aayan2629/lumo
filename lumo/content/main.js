@@ -12,6 +12,9 @@
     const id = ++run;
     LUMO.ui.destroy();
     data = null;
+    // Open "Read more" first, so marks in the folded part of the ad can be seen.
+    if (LUMO.pageKind() && LUMO.expandAd()) await new Promise((r) => setTimeout(r, 450));
+    if (id !== run) return;
     const L = LUMO.extract();
     log('page', LUMO.pageKind() || 'not a listing', L ? { address: L.address, price: L.price, beds: L.beds, lat: L.lat, forSale: !L.rent } : '');
     if (!L) { if (fromClick) LUMO.ui.note('Open a listing and Lumo will check it'); return; }
@@ -33,6 +36,11 @@
     data = { mode, L, F, checks, claims, state, kb, marks: LUMO.buildMarks(checks, L, claims) };
     log(checks.length + ' checks,', data.marks.text.length + ' words and ' + data.marks.photos.length + ' photos marked');
     LUMO.ui.render(data);
+    // Every red, amber and green check should have a mark on the page. Say in the console if one doesn't.
+    const marked = new Set([...data.marks.text, ...data.marks.photos].flatMap((m) => m.checks));
+    const missing = checks.filter((c) => ['red', 'amber', 'green'].includes(c.level) && !c.dup && !marked.has(c.id)).map((c) => c.id);
+    if (missing.length) log('no place on the page for:', missing.join(', '));
+    LUMO._last = data;   // for debugging in the console
     watch();
   }
 

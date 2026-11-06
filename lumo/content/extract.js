@@ -85,6 +85,8 @@
   const HEAD = ['[data-lumo="headline"]', '[data-testid="listing-details__description-headline"]', '[class*="description__headline"]'];
   const FEAT = ['[data-lumo="features"]', '[data-testid*="additional-features"]', '[data-testid="property-features"]', '[class*="property-features"]', '[class*="propertyFeatures"]'];
   const PRICE = ['[data-lumo="price"]', '[data-testid="listing-details__summary-title"]', '[data-testid*="price"]', '.property-price', '[class*="property-price"]', '[class*="PropertyPrice"]'];
+  // The summary strip: "3 Beds 2 Baths 2 Parking".
+  const FACTS = ['[data-lumo="facts"]', '[data-testid="property-features"]', '[data-testid="property-features-wrapper"]', '[class*="property-info__primary-features"]', '[class*="primary-features"]', '[class*="property-features__wrapper"]'];
   const GALLERY = ['[data-lumo="gallery"]', '[data-testid*="gallery"]', '[class*="gallery"]', '[class*="Gallery"]', '[class*="carousel"]', '[class*="Carousel"]'];
   const first = (sels) => { for (const s of sels) { const el = $(s); if (el && text(el)) return el; } return null; };
 
@@ -115,6 +117,23 @@
     });
     return cands.sort((a, b) => text(a).length - text(b).length)[0] || null;
   }
+
+  // Sites fold the description and features behind "Read more". Open them, the way you would,
+  // so every word Lumo marks can be seen. Returns true if anything opened.
+  LUMO.expandAd = () => {
+    let n = 0;
+    const scopes = [first(DESC), first(FEAT), document.querySelector('[data-testid="listing-details__description"]'), document.querySelector('[data-testid="listing-details__additional-features"]')]
+      .filter(Boolean).map((el) => el.closest('section') || el.parentElement || el);
+    for (const s of new Set(scopes)) {
+      for (const b of s.querySelectorAll('button, [role="button"], a')) {
+        const t = text(b);
+        if (t.length > 24 || !/^(read|show|see|view)\s+(more|all|full)|^more$|^expand/i.test(t)) continue;
+        if (b.getAttribute('aria-expanded') === 'true' || b.closest('[data-lumo-ui]')) continue;
+        try { b.click(); n++; } catch {}
+      }
+    }
+    return n > 0;
+  };
 
   LUMO.photos = () => {
     const root = first(GALLERY) || document.body;
@@ -154,7 +173,7 @@
     if (L.beds == null) L.beds = Number(blob.match(/(\d)\s*(?:bed(?:room)?s?|br)\b/i)?.[1]) || null;
     if (L.parking == null) L.parking = Number(blob.match(/(\d)\s*(?:car|parking|garage)/i)?.[1]) || 0;
     if (!L.suburb && L.address) L.suburb = L.address.split(',').slice(-1)[0].replace(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b.*$/, '').trim();
-    L.regions = { price: priceEl, text: [first(HEAD), desc, first(FEAT)].filter(Boolean) };
+    L.regions = { price: priceEl, text: [first(HEAD), desc, first(FEAT)].filter(Boolean), facts: first(FACTS) };
     return L;
   };
 })();

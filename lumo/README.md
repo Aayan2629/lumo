@@ -50,7 +50,7 @@ Change the defaults in Settings → Investor.
 |---|---|
 | The beam | When an ad opens, a soft light passes down it and each flagged word lights up as it's reached. |
 | Dock (bottom right) | Beam logo and red/amber/green counts. Says the verdict once ("4 red flags"). Drag it anywhere; it remembers where. Click to open. |
-| Text marks | The ad's own words: red for problems, yellow to check, green for good things. Painted into the page's text, so they stay exactly on the words when you scroll. |
+| Text marks | The ad's own words: red for problems, yellow to check, green for good things. Painted into the page's text, so they stay exactly on the words when you scroll. Every red, yellow and green check in the panel has a mark in its own colour: a claim word if the ad makes one, otherwise a topic word ("garage" for parking, "station" for transport), the facts strip ("2 Parking"), the suburb's name for area checks, the street for this home, or the price. Lumo opens the ad's "Read more" first, so no mark hides in the folded part. |
 | Price note | A small note pinned beside the price: what similar homes ask. |
 | Photo edges | A thin glowing edge on the photo the problem is about, with a small tag. |
 | Hover bubble | One line of glass: "13 licensed venues within 150 m. Closest 26 m." |
