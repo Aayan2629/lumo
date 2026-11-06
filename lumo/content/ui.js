@@ -217,11 +217,12 @@
     }
     // A note pinned beside the price: what similar homes ask.
     chip?.remove(); chip = null;
-    const pc = byId('price'), pm = D.marks.text.find((m) => m.key === 'price');
+    const inv = D.mode === 'invest';
+    const pc = byId(inv ? 'value' : 'price'), pm = D.marks.text.find((m) => m.key === 'price');
     if (pc?.proof?.items && pm) {
       chip = document.createElement('div');
       chip.className = 'chip glass ' + pc.level;
-      chip.innerHTML = `<i class="dot"></i>${M(pc.proof.items[1].v)}<span>similar</span>`;
+      chip.innerHTML = inv ? `<i class="dot"></i>${LUMO.short(pc.proof.median)}<span>sold nearby</span>` : `<i class="dot"></i>${M(pc.proof.items[1].v)}<span>similar</span>`;
       chip.style.setProperty('--d', D.rerender ? '0s' : '1.4s');
       layer.insertBefore(chip, bubble);
     }
@@ -429,6 +430,9 @@
       return;
     }
     const { L, checks, state } = D;
+    const inv = D.mode === 'invest';
+    const TABS = inv ? [['checks', 'Checks'], ['numbers', 'Numbers'], ['ask', 'Ask'], ['saved', 'Saved']] : [['checks', 'Checks'], ['ask', 'Ask Lumo'], ['saved', 'Saved']];
+    if (!TABS.some(([k]) => k === view)) view = 'checks';
     const saved = (state.saved || []).some((s) => s.url === L.url);
     const parts = (L.address || '').split(',');
     const nSaved = (state.saved || []).length;
@@ -437,22 +441,21 @@
       <header class="top" title="Drag to move">
         <span class="grip"></span>
         ${LUMO.logo(32)}
-        <div class="addr"><b>${E(parts[0] || 'This home')}</b><span>${E(parts.slice(1).join(',').trim() || [L.beds && L.beds + ' bed', L.type].filter(Boolean).join(' · '))}</span></div>
+        <div class="addr"><b>${E(parts[0] || 'This home')}</b><span>${inv ? '<em class="badge">Investor</em>' : ''}${E(parts.slice(1).join(',').trim() || [L.beds && L.beds + ' bed', L.type].filter(Boolean).join(' · '))}</span></div>
         <button class="round heart ${saved ? 'on' : ''}" aria-label="${saved ? 'Saved' : 'Save this home'}" aria-pressed="${saved}">${I('heart', 16)}</button>
         <button class="round eye ${marksOn ? '' : 'dim'}" aria-label="${marksOn ? 'Hide marks on the page' : 'Show marks on the page'}" aria-pressed="${marksOn}">${I(marksOn ? 'eye' : 'eyeoff', 16)}</button>
         <button class="round side" aria-label="${pos.side ? 'Back to a floating window' : 'Open as a side page'}" title="${pos.side ? 'Float' : 'Side page'}">${I(pos.side ? 'shrink' : 'expand', 15)}</button>
         <button class="round fold" aria-label="Minimise">${I('fold', 16)}</button>
       </header>
-      ${hero()}
-      <div class="seg" role="tablist">
-        <span class="thumb" style="transform:translateX(${['checks', 'ask', 'saved'].indexOf(view) * 100}%)"></span>
-        <button role="tab" data-v="checks" aria-selected="${view === 'checks'}">Checks</button>
-        <button role="tab" data-v="ask" aria-selected="${view === 'ask'}">Ask Lumo</button>
-        <button role="tab" data-v="saved" aria-selected="${view === 'saved'}">Saved${nSaved ? `<span class="n">${nSaved}</span>` : ''}</button>
+      ${inv ? investHero() : hero()}
+      <div class="seg" role="tablist" style="--n:${TABS.length}">
+        <span class="thumb" style="transform:translateX(${TABS.findIndex(([k]) => k === view) * 100}%)"></span>
+        ${TABS.map(([k, label]) => `<button role="tab" data-v="${k}" aria-selected="${view === k}">${label}${k === 'saved' && nSaved ? `<span class="n">${nSaved}</span>` : ''}</button>`).join('')}
       </div>
-      <div class="body">${view === 'checks' ? (detail ? detailView(byId(detail)) : list(checks)) : view === 'ask' ? askView() : savedView()}</div>
+      <div class="body">${view === 'checks' ? (detail ? detailView(byId(detail)) : list(checks)) : view === 'numbers' ? numbersView() : view === 'ask' ? askView() : savedView()}</div>
       ${view === 'ask' ? composer() : foot()}`;
     wirePanel();
+    if (view === 'numbers') wireNumbers();
     wireMaps(panel);
     addGrips(); sideGrips();
     if (view === 'ask') renderChat(); else if (!detail) panel.querySelector('.body').scrollTop = scroll;
@@ -518,13 +521,15 @@
   function proof(p) {
     if (p.kind === 'bars') {
       const max = Math.max(...p.items.map((i) => i.v || 0));
-      return `<div class="bars">${p.items.map((i) => `<div class="bar ${i.me ? 'me' : ''}"><span>${E(i.label)}</span><i style="width:${(i.v / max) * 100}%"></i><b class="num">${M(i.v)}</b></div>`).join('')}</div>
+      const fmt = p.fmt === 'pct' ? LUMO.pct : M;
+      return `<div class="bars">${p.items.map((i) => `<div class="bar ${i.me ? 'me' : ''}"><span>${E(i.label)}</span><i style="width:${(i.v / max) * 100}%"></i><b class="num">${fmt(i.v)}</b></div>`).join('')}</div>
         ${p.note ? `<p class="src" style="margin:12px 0 0">${E(p.note)}</p>` : ''}
         ${p.rows && p.rows.length ? `<div class="rows">${p.rows.map((r) => `<div><span>${E(r[0])}</span><b class="num">${E(r[1])}</b></div>`).join('')}</div>` : ''}`;
     }
     if (p.kind === 'history') {
       const max = Math.max(...p.rows.map((r) => r.price || 0)) || 1;
-      return `<div class="label">Rent history</div><div class="hist">${p.rows.map((r) => `<div><span class="num">${E(new Date(r.date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }))}</span><i style="width:${((r.price || 0) / max) * 100}%"></i><b class="num">${r.price ? M(r.price) : 'Listed'}</b></div>`).join('')}</div>`;
+      const big = max > 20000, f = big ? LUMO.short : M;
+      return `<div class="label">${E(p.title || 'Rent history')}</div><div class="hist">${p.rows.map((r) => `<div><span class="num">${E(new Date(r.date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }))}${r.label ? `<small>${E(r.label)}</small>` : ''}</span><i style="width:${((r.price || 0) / max) * 100}%"></i><b class="num">${r.price ? f(r.price) : 'Listed'}</b></div>`).join('')}</div>`;
     }
     if (p.kind === 'commute') {
       const c = p.place, h = p.home;
@@ -536,12 +541,15 @@
     if (p.kind === 'market') return market(p);
     if (p.kind === 'route') return route(p);
     if (p.kind === 'das') return dasView(p);
+    if (p.kind === 'cash') return cashView(p.model, p.upfront);
+    if (p.kind === 'growth') return growthView(p);
     if (p.kind === 'photos') return `<div class="photos">${p.photos.map((x) => `<a href="${E(x.link)}" target="_blank" rel="noopener"><img src="${E(x.url)}" alt="Street photo"><span>${E(x.date)}</span></a>`).join('')}</div><p class="src" style="margin:8px 0 0">Photos from Mapillary, taken by people walking and driving past.</p>`;
     return '';
   }
 
   // The rent market: every similar home as a dot, the median line, and this ad. Cheaper homes are green.
   function market(p) {
+    if (p.sale) return saleMarket(p);
     const vals = [...(p.prices || []), p.me, p.median].filter(Number.isFinite);
     if (vals.length < 3) return '';
     // Draw at the width the panel really has, so text keeps its size when the panel is resized.
@@ -661,6 +669,192 @@
     return frame + key + `<div class="das">${cards}</div>`;
   }
 
+  // ================= Investor mode =================
+  const SH = (n) => LUMO.short(n);
+  const signed = (n) => (n >= 0 ? '+' : '−') + M(Math.abs(n));
+  let numPrice = null;                       // a price the investor tried in Numbers (not saved)
+  const invSet = () => ({ ...LUMO.investDefaults, ...(D.state.profile.invest || {}) });
+  const invModel = (o = {}) => LUMO.investModel(D.L, D.F, D.state.profile, { ...(numPrice ? { price: numPrice } : {}), ...o });
+
+  // Score ring: one number out of 100, drawn as a ring that fills in.
+  function ring(score) {
+    const r = 25, c = 2 * Math.PI * r, lv = score >= 70 ? 'green' : score >= 50 ? 'amber' : 'red';
+    return `<div class="ring ${lv}" role="img" aria-label="Lumo score ${score} out of 100"><svg viewBox="0 0 64 64" width="64" height="64">
+      <circle cx="32" cy="32" r="${r}" class="ring-bg"/><circle cx="32" cy="32" r="${r}" class="ring-fg${D.ringShown ? ' still' : ''}" style="--c-len:${c.toFixed(1)};--c-off:${(c * (1 - score / 100)).toFixed(1)}"/></svg>
+      <b class="num">${score}</b><small>score</small></div>`;
+  }
+
+  function investHero() {
+    const { L, F, checks } = D;
+    const model = invModel(), V = F.inv?.value || {};
+    const sc = LUMO.investScore(L, F, model);
+    const n = LUMO.counts(checks);
+    const lv = n.red ? 'red' : n.amber ? 'amber' : 'green';
+    const top = checks.filter((c) => (c.level === 'red' || c.level === 'amber') && !c.dup).slice(0, 2).map((c) => c.title.toLowerCase());
+    const sub = top.length ? top.join(', ').replace(/^./, (x) => x.toUpperCase()) : n.green ? `${n.green} good signs` : 'Connect data to check this home';
+    const tiles = model ? `<div class="ktiles">
+        <div class="kt"><span>Rent</span><b class="num">${model.rent ? M(model.rent) : '—'}</b><small>a week</small></div>
+        <div class="kt"><span>Yield</span><b class="num">${model.gross != null ? LUMO.pct(model.gross) : '—'}</b><small>gross</small></div>
+        <div class="kt ${model.rent ? (model.weekly >= 0 ? 'pos' : 'neg') : ''}" data-o="tileWeekly"><span>Each week</span><b class="num">${model.rent ? signed(Math.round(model.weekly)) : '—'}</b><small>after loan</small></div>
+      </div>` : '';
+    // Price against value: the valuation range as a band, the value as a tick, the ad's price as the marker.
+    let vm = '';
+    const ask = L.sale && L.sale.kind !== 'hidden' ? (L.sale.kind === 'range' ? L.sale.low : L.sale.price) : null;
+    if (V.mid) {
+      const band = V.avm ? [V.avm.low, V.avm.high] : [V.low, V.high];
+      const pts = [V.mid, ask, ...band].filter(Number.isFinite);
+      const lo = Math.min(...pts) * 0.96, hi = Math.max(...pts) * 1.04, x = (v) => ((v - lo) / (hi - lo)) * 100;
+      const vl = byId('value')?.level || 'grey';
+      vm = `<div class="vmeter ${vl}"><div class="track">
+          ${band[0] && band[1] ? `<span class="band" style="left:${x(band[0])}%;right:${100 - x(band[1])}%"></span>` : ''}
+          <span class="mk fair" style="left:${x(V.mid)}%"></span>${ask ? `<span class="mk" style="left:${x(ask)}%"></span>` : ''}</div>
+        <div class="mlabels under">${[[V.mid, 'Value'], ask && [ask, L.sale.kind === 'fixed' ? 'Asks' : 'Guide']].filter(Boolean).sort((a, b) => a[0] - b[0]).map(([v, t2], i, arr) => `<span style="--x:${arr.length > 1 && Math.abs(x(arr[0][0]) - x(arr[1][0])) < 30 ? (i ? 100 : 0) : x(v)}%">${t2} <b class="num">${SH(v)}</b></span>`).join('')}</div></div>`;
+    }
+    const links = `<div class="links"><a class="link" href="${E(gmaps(L))}" target="_blank" rel="noopener">${G()}Google Maps</a>${L.lat ? `<a class="link" href="${E(street(L))}" target="_blank" rel="noopener">${I('street', 14)}Street View</a>` : ''}<button class="link" data-goto="numbers">${I('chart', 14)}Numbers</button></div>`;
+    setTimeout(() => { if (D) D.ringShown = true; }, 1300);   // the ring fills in once, not on every tab switch
+    return `<div class="hero ihero ${lv}">
+      <div class="ihead">${sc.total != null ? ring(sc.total) : ''}<div class="verdict">${E(n.red ? `${n.red} red flag${n.red > 1 ? 's' : ''} in the ad` : LUMO.verdict(checks))}<span class="sub">${E(sub)}</span></div></div>
+      ${tiles}${vm}${links}</div>`;
+  }
+
+  // Each week: money in and out, as bars. Used in Numbers and in check details.
+  function flowRows(m) {
+    const rows = [['Rent', m.rent || 0, 'in'], ['Loan', -m.loanWeek, 'loan'], ...m.costs.map((c) => [c.label, -c.yearly / 52, 'cost', c.note])];
+    const max = Math.max(...rows.map((r) => Math.abs(r[1]))) || 1;
+    return rows.map(([label, v, k, note]) => `<div class="fl ${k}" ${note ? `title="${E(note)}"` : ''}><span>${E(label)}</span><i style="--w:${(Math.abs(v) / max) * 100}%"></i><b class="num">${v >= 0 ? '+' : '−'}${M(Math.abs(Math.round(v)))}</b></div>`).join('');
+  }
+  function upfrontRows(m) {
+    const u = m.upfront;
+    return `<div class="rows"><div><span>Deposit (${m.set.deposit}%)</span><b class="num">${M(u.deposit)}</b></div><div><span>Stamp duty (NSW)</span><b class="num">${M(u.duty)}</b></div>
+      <div><span>Legal, inspections, fees</span><b class="num">${M(u.other)}</b></div><div class="total"><span>Cash to buy</span><b class="num">${M(u.total)}</b></div></div>
+      ${u.lmi ? '<p class="src" style="margin:8px 0 0">Under 20% down, most lenders add mortgage insurance (LMI) on top.</p>' : ''}`;
+  }
+  function cashView(m, upfront) {
+    if (!m) return '';
+    if (upfront) return `<div class="label">Cash to buy at ${SH(m.price)}</div>${upfrontRows(m)}`;
+    return `<div class="label">Each week at ${SH(m.price)}</div><div class="flow">${flowRows(m)}</div>
+      <div class="net ${m.weekly >= 0 ? 'pos' : 'neg'}"><span>Left over</span><b class="num">${signed(Math.round(m.weekly))}</b></div>`;
+  }
+  function growthView(p) {
+    const g = p.g, rows = [['1 yr', g['1yr']], ['3 yrs', g['3yr']], ['5 yrs', g['5yr']], ['10 yrs', g['10yr']]].filter((r) => r[1] != null);
+    const max = Math.max(...rows.map((r) => Math.abs(r[1]))) || 1;
+    const f = p.forecast;
+    return `<div class="label">${E(p.sub)} ${E(p.mt)} prices</div><div class="growth">${rows.map(([k, v]) => `<div class="gr ${v < 0 ? 'down' : ''}"><span>${k}</span><i style="--w:${(Math.abs(v) / max) * 100}%"></i><b class="num">${v >= 0 ? '+' : ''}${LUMO.pct(v)}</b></div>`).join('')}</div>
+      ${f ? `<div class="fc"><span>Next 12 months</span><div class="fcbar"><i style="left:${Math.max(0, (f.low + 0.05) / 0.25 * 100)}%;right:${Math.max(0, 100 - (f.high + 0.05) / 0.25 * 100)}%"></i><b style="left:${(f.most_likely + 0.05) / 0.25 * 100}%"></b></div><em class="num">${LUMO.pct(f.low)} to ${LUMO.pct(f.high)}</em></div>` : ''}`;
+  }
+
+  // Numbers: the investor's weekly sum, live. Drag a slider and every figure updates.
+  function numbersView() {
+    const m = invModel();
+    if (!m) return `<div class="view empty"><div><b>No price to work with</b>Lumo needs a price or a value for this home.</div></div>`;
+    const s = m.set, base = LUMO.investModel(D.L, D.F, D.state.profile).price;
+    const sc = LUMO.investScore(D.L, D.F, m);
+    const lo = Math.round((base * 0.7) / 5000) * 5000, hi = Math.round((base * 1.3) / 5000) * 5000;
+    return `<div class="view nums">
+      <div class="card cashcard">
+        <div class="label">Each week</div>
+        <div class="bignum num ${m.weekly >= 0 ? 'pos' : 'neg'}" data-o="weekly">${signed(Math.round(m.weekly))}</div>
+        <p class="hint" data-o="weeklySub">${m.weekly >= 0 ? 'Rent covers the loan and costs.' : 'You top up each week, before any tax refund.'}</p>
+        <label class="ctl"><span>Price</span><b class="num" data-o="price">${SH(m.price)}</b><input type="range" data-i="price" min="${lo}" max="${hi}" step="5000" value="${Math.round(m.price / 5000) * 5000}" aria-label="Price"></label>
+        <p class="hint tight" data-o="priceBasis">Starts at ${E(m.priceBasis)}.</p>
+        <label class="ctl"><span>Deposit</span><b class="num" data-o="deposit">${s.deposit}%</b><input type="range" data-i="deposit" min="5" max="60" step="5" value="${s.deposit}" aria-label="Deposit"></label>
+        <label class="ctl"><span>Interest rate</span><b class="num" data-o="rate">${(+s.rate).toFixed(2)}%</b><input type="range" data-i="rate" min="3" max="9.5" step="0.05" value="${s.rate}" aria-label="Interest rate"></label>
+        <div class="pills" role="radiogroup" aria-label="Loan type"><button role="radio" data-io="1" aria-checked="${!!s.io}">Interest only</button><button role="radio" data-io="0" aria-checked="${!s.io}">Principal and interest</button></div>
+        <div class="flow" data-o="flow">${flowRows(m)}</div>
+        <p class="src tight">Rent: ${E(m.rentBasis || 'not estimated')}. Hover a cost to see where it comes from.</p>
+      </div>
+      <div class="card"><div class="label">Return</div><div class="rets" data-o="rets">${retsHTML(m)}</div></div>
+      <div class="card"><div data-o="upfront">${cashView(m, true)}</div></div>
+      ${sc.total != null ? `<div class="card"><div class="label">Lumo score <b class="num" data-o="score">${sc.total}</b></div><div class="parts" data-o="parts">${partsHTML(sc)}</div></div>` : ''}
+      ${D.F.inv?.market?.growth ? `<div class="card">${growthView({ g: D.F.inv.market.growth, forecast: D.F.inv.market.forecast, mt: D.F.inv.mt, sub: D.F.suburb || D.L.suburb || 'Suburb' })}</div>` : ''}
+      <p class="src">Estimates from the data shown, with typical costs where the ad gives none. Not financial advice. Stamp duty at NSW 2026–27 rates.</p>
+    </div>`;
+  }
+  function retsHTML(m) {
+    const sy = D.F.inv?.market?.yield;
+    const items = [['Gross yield', m.gross], ['After costs', m.net], sy && ['Suburb gross', sy]].filter(Boolean);
+    return items.map(([k, v]) => `<div><span>${k}</span><b class="num">${v != null ? LUMO.pct(v) : '—'}</b></div>`).join('');
+  }
+  function partsHTML(sc) {
+    return sc.parts.map((p) => `<div class="part ${p.score >= 70 ? 'green' : p.score >= 45 ? 'amber' : 'red'}"><span>${E(p.label)}<small>${E(p.why)}</small></span><i style="--w:${p.score}%"></i><b class="num">${p.score}</b></div>`).join('');
+  }
+  function wireNumbers() {
+    const root2 = panel.querySelector('.nums');
+    if (!root2) return;
+    const val = (k) => root2.querySelector(`[data-i="${k}"]`);
+    const out = (k) => root2.querySelector(`[data-o="${k}"]`);
+    let io = invSet().io;
+    const read = () => ({ deposit: +val('deposit').value, rate: +val('rate').value, io });
+    const update = () => {
+      numPrice = +val('price').value;
+      const m = invModel(read());
+      out('price').textContent = SH(m.price);
+      out('priceBasis').textContent = numPrice ? 'Your price. Lumo started at the value of similar sales or the ad.' : '';
+      out('deposit').textContent = m.set.deposit + '%';
+      out('rate').textContent = (+m.set.rate).toFixed(2) + '%';
+      const w = out('weekly'); w.textContent = signed(Math.round(m.weekly)); w.className = 'bignum num ' + (m.weekly >= 0 ? 'pos' : 'neg');
+      out('weeklySub').textContent = m.weekly >= 0 ? 'Rent covers the loan and costs.' : 'You top up each week, before any tax refund.';
+      out('flow').innerHTML = flowRows(m);
+      out('rets').innerHTML = retsHTML(m);
+      out('upfront').innerHTML = cashView(m, true);
+      const sc = LUMO.investScore(D.L, D.F, m);
+      if (out('score')) { out('score').textContent = sc.total; out('parts').innerHTML = partsHTML(sc); }
+      const tile = panel.querySelector('[data-o="tileWeekly"]');
+      if (tile && m.rent) { tile.className = 'kt ' + (m.weekly >= 0 ? 'pos' : 'neg'); tile.querySelector('b').textContent = signed(Math.round(m.weekly)); }
+    };
+    // Keep the investor's own deposit, rate and loan type for every home.
+    const persist = async () => {
+      const inv = { ...invSet(), ...read() };
+      D.state.profile.invest = inv;
+      await LUMO.send('setInvest', { invest: inv });
+      D.checks = LUMO.investRules(D.L, D.F, D.state.profile, D.claims);
+    };
+    // The track fills up to the thumb, so the setting reads at a glance.
+    const fill = (r) => r.style.setProperty('--p', ((r.value - r.min) / (r.max - r.min)) * 100 + '%');
+    root2.querySelectorAll('input[type=range]').forEach((r) => { fill(r); r.oninput = () => { fill(r); update(); }; r.onchange = persist; });
+    root2.querySelectorAll('[data-io]').forEach((b) => (b.onclick = () => {
+      io = b.dataset.io === '1';
+      root2.querySelectorAll('[data-io]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+      update(); persist();
+    }));
+  }
+
+  // Sold prices of similar homes as dots, the valuation range as a band, and the ad's price.
+  function saleMarket(p) {
+    const vals = [...(p.prices || []), p.me, p.median, ...(p.band || [])].filter(Number.isFinite);
+    if (vals.length < 2) return '';
+    const W = Math.round(Math.max(300, Math.min(780, (pos.size ? Math.min(pos.size.w, innerWidth - 24) : panel?.clientWidth || 400) - 74))), H = 124;
+    const lo = Math.min(...vals) * 0.97, hi = Math.max(...vals) * 1.03;
+    const x = (v) => 16 + ((v - lo) / (hi - lo)) * (W - 32);
+    const stack = {};
+    const dots = (p.prices || []).slice().sort((a, b) => a - b).map((v) => {
+      const bx = Math.round(x(v) / 10); const k = (stack[bx] = (stack[bx] || 0) + 1);
+      return `<circle cx="${x(v)}" cy="${66 - (k - 1) * 10}" r="4.5" fill="var(--ink2)" opacity=".32"/>`;
+    }).join('');
+    const anchor = (xx) => (xx < 80 ? 'start' : xx > W - 80 ? 'end' : 'middle');
+    const tx = (xx) => (xx < 80 ? Math.max(4, xx - 8) : xx > W - 80 ? Math.min(W - 4, xx + 8) : xx);
+    const xm = x(p.median);
+    const band = p.band && p.band[0] ? `<rect x="${x(p.band[0])}" y="74" width="${Math.max(2, x(p.band[1]) - x(p.band[0]))}" height="12" rx="6" fill="var(--blue)" opacity=".14"/>
+      <text x="${(x(p.band[0]) + x(p.band[1])) / 2}" y="100" text-anchor="middle" style="opacity:.7">Valuation range</text>` : '';
+    const lvl = p.me == null ? null : p.me > p.median * 1.04 ? 'var(--red)' : p.me < p.median * 0.92 ? 'var(--red)' : p.me < p.median * 0.97 ? 'var(--amber)' : 'var(--green)';
+    const me = p.me == null ? '' : `<circle cx="${x(p.me)}" cy="80" r="13" fill="${lvl}" opacity=".14"/><circle cx="${x(p.me)}" cy="80" r="7" fill="#fff" stroke="${lvl}" stroke-width="3.5"/>
+      <text x="${tx(x(p.me))}" y="${H - 6}" text-anchor="${anchor(x(p.me))}" style="font-weight:700;fill:var(--ink)">This ad ${SH(p.me)}</text>`;
+    const svg = `<svg class="mkt" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Sale prices of similar homes">
+      <line x1="16" x2="${W - 16}" y1="80" y2="80" stroke="var(--hair)" stroke-width="4" stroke-linecap="round"/>
+      ${band}${dots}
+      <line x1="${xm}" x2="${xm}" y1="18" y2="86" stroke="var(--ink3)" stroke-dasharray="3 3"/>
+      <text x="${tx(xm)}" y="12" text-anchor="${anchor(xm)}">Value ${SH(p.median)}</text>
+      ${me}</svg>`;
+    const rows = (p.comps || []).slice(0, 5).map((c) => {
+      const diff = p.me != null ? c.price - p.me : null;
+      const chip = diff == null ? '' : Math.abs(diff) < 5000 ? '<em class="dchip">same</em>' : `<em class="dchip ${diff > 0 ? 'red' : 'green'}">${diff > 0 ? '+' : '−'}${SH(Math.abs(diff))}</em>`;
+      return `<div class="comp"><span><b>${E(c.address || 'Similar home')}</b><small>${c.beds ? c.beds + ' bed · ' : ''}${c.d != null ? LUMO.dist(c.d) + ' away · ' : ''}${c.date ? 'sold ' + new Date(c.date).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' }) : ''}</small></span><span class="num">${SH(c.price)}${chip}</span></div>`;
+    }).join('');
+    return `<div class="label">${(p.prices || []).length ? `${p.prices.length} similar homes sold in the last year` : 'Value'}</div>${svg}
+      <p class="src" style="margin:6px 0 0">Each dot is a similar home that sold. The dashed line is Lumo’s value. ${E(p.note || '')}</p>
+      ${rows ? `<div class="label" style="margin-top:14px">Closest sales${p.me != null ? ' (vs this ad)' : ''}</div><div class="comps">${rows}</div>` : ''}`;
+  }
+
   function askView() {
     return `<div class="view"><div class="askhead">${LUMO.logo(40)}<div><b>Ask about this home</b><span>Lumo answers from the checks and the data.</span></div></div><div class="chat"></div></div>`;
   }
@@ -670,7 +864,7 @@
     if (!s.length) return `<div class="view empty"><span class="heart">${I('heart', 28)}</span><div><b>Your shortlist</b>Tap the heart on any home.<br>Lumo keeps its checks with it.</div></div>`;
     return `<div class="view saved">${s.map((h) => `<div class="sh">
       <a href="${E(h.url)}">${h.photo ? `<img src="${E(h.photo)}" alt="">` : '<span class="ph"></span>'}
-      <div class="meta"><div class="price num">${h.price ? M(h.price) : 'Price hidden'}</div><div class="ad">${E((h.address || '').split(',')[0])}</div>
+      <div class="meta"><div class="price num">${h.price ? (h.sale ? LUMO.short(h.price) : M(h.price) + ' /wk') : 'Price hidden'}${h.sale ? '<em class="badge">Buy</em>' : ''}</div><div class="ad">${E((h.address || '').split(',')[0])}</div>
       <div class="cs">${['red', 'amber', 'green'].filter((k) => h.counts?.[k]).map((k) => `<span class="count ${k}"><i class="dot"></i>${h.counts[k]}</span>`).join('')}</div></div></a>
       <button class="rm" data-unsave="${E(h.url)}" aria-label="Remove">${I('x', 13)}</button></div>`).join('')}</div>`;
   }
@@ -696,7 +890,7 @@
     on('.heart', async () => {
       const { L } = D;
       const isSaved = (D.state.saved || []).some((s) => s.url === L.url);
-      D.state.saved = isSaved ? await LUMO.send('unsave', { url: L.url }) : await LUMO.send('save', { item: { url: L.url, address: L.address, price: L.price, photo: L.photo, counts: LUMO.counts(D.checks), t: Date.now() } });
+      D.state.saved = isSaved ? await LUMO.send('unsave', { url: L.url }) : await LUMO.send('save', { item: { url: L.url, address: L.address, price: L.price, sale: D.mode === 'invest', photo: L.photo, counts: LUMO.counts(D.checks), t: Date.now() } });
       renderPanel();
     });
     panel.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => { view = b.dataset.v; detail = null; renderPanel(); }));
@@ -707,6 +901,7 @@
     });
     on('.more-grey', () => { showGrey = true; renderPanel(); });
     on('[data-photos]', () => { detail = 'photos'; view = 'checks'; renderPanel(); });
+    on('[data-goto]', () => { view = panel.querySelector('[data-goto]').dataset.goto; detail = null; renderPanel(); });
     on('.back', () => { detail = null; renderPanel(); });
     const qt = panel.querySelector('.quote'); if (qt) qt.onclick = () => showInAd(qt.dataset.show);
     panel.querySelectorAll('.q').forEach((b) => (b.onclick = () => { view = 'ask'; detail = null; renderPanel(); ask(b.textContent); }));

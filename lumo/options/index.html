@@ -11,7 +11,7 @@
 <main>
   <header class="top">
     <svg class="logo" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true"><defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1C1C1E"/><stop offset="1" stop-color="#2C2C30"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3D58C"/><stop offset="1" stop-color="#B98F4F"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#a)"/><path d="M120 236 L256 124 L392 236" fill="none" stroke="url(#b)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/><path d="M196 230 V384 H324" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/><circle cx="330" cy="296" r="22" fill="#F3D58C"/></svg>
-    <div><h1>Lumo</h1><p>Checks every rental ad you open.</p></div>
+    <div><h1>Lumo</h1><p>Checks every property ad you open: rentals for you, sales for investors.</p></div>
     <span class="saved" id="saved">Saved</span>
   </header>
 
@@ -20,6 +20,7 @@
     <button role="tab" data-tab="you" aria-selected="true">You</button>
     <button role="tab" data-tab="places">Places</button>
     <button role="tab" data-tab="id">Renter ID</button>
+    <button role="tab" data-tab="invest">Investor</button>
     <button role="tab" data-tab="data">Data</button>
   </nav>
 
@@ -81,6 +82,25 @@
     </div>
   </section>
 
+  <!-- Investor -->
+  <section class="tab" data-tab="invest" hidden>
+    <div class="card glass">
+      <p class="lead">On a home for sale, Lumo switches to Investor mode: value against real sales, the rent it would earn, what it costs each week, and the traps in the ad.</p>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Deposit</span><b class="big num" id="depOut"></b></div>
+      <input type="range" id="dep" min="5" max="60" step="5">
+      <div class="field" style="margin-top:14px"><span>Interest rate</span><b class="big num" id="rateOut"></b></div>
+      <input type="range" id="rate" min="3" max="9.5" step="0.05">
+      <div class="field" style="margin-top:14px"><span>Loan</span>
+        <div class="pills" id="io"><button data-v="1">Interest only</button><button data-v="0">Principal and interest</button></div>
+      </div>
+      <div class="field" style="margin-top:14px"><span>Property manager fee</span><b class="num" id="mgmtOut"></b></div>
+      <input type="range" id="mgmt" min="0" max="12" step="0.5">
+      <p class="hint">Lumo uses these for every home's weekly sums. You can also change them in the Numbers tab beside any ad. Estimates, not financial advice.</p>
+    </div>
+  </section>
+
   <!-- Data -->
   <section class="tab" data-tab="data" hidden>
     <div class="card glass">
@@ -124,7 +144,7 @@
   </section>
 
   <a class="demo" id="demo">Try it on real Bondi rentals</a>
-  <p class="hint center" style="margin-top:12px"><a id="offline" style="color:inherit;cursor:pointer;text-decoration:underline">Offline demo</a> for when there is no internet.</p>
+  <p class="hint center" style="margin-top:12px"><a id="offline" style="color:inherit;cursor:pointer;text-decoration:underline">Rental demo</a> · <a id="offlineSale" style="color:inherit;cursor:pointer;text-decoration:underline">Investor demo</a>, both work with no internet.</p>
 </main>
 <script type="module" src="options.js"></script>
 </body>

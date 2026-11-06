@@ -4,20 +4,58 @@
   const M = LUMO.money;
 
   LUMO.opening = (D) => {
+    if (D.mode === 'invest') {
+      const m = LUMO.investModel(D.L, D.F, D.state.profile), red = D.checks.filter((c) => c.level === 'red');
+      const lead = red.length ? `Main thing: ${red[0].title.toLowerCase()}. ${red[0].line}` : 'Nothing serious so far.';
+      return `${lead}${m?.rent ? ` I expect about ${M(m.rent)} a week in rent, ${LUMO.pct(m.gross)} gross.` : ''} Ask me about the price, the rent, the costs or the area.`;
+    }
     const red = D.checks.filter((c) => c.level === 'red'), good = D.checks.filter((c) => c.level === 'green');
     const lead = red.length ? `Main thing: ${red[0].title.toLowerCase()}. ${red[0].line}` : 'Nothing serious so far.';
     return `${lead}${good.length ? ` On the plus side: ${good.slice(0, 2).map((c) => c.title.toLowerCase()).join(', ')}.` : ''} Ask me anything about this home.`;
   };
 
   LUMO.starters = (D) => {
+    if (D.mode === 'invest') return ['What will it really sell for?', 'What does it cost to hold?', 'Is this a growth or a rent play?'];
     const qs = [];
     if (D.checks.some((c) => c.id === 'night' && c.proof)) qs.push('Is the walk home safe at night?');
     for (const c of D.checks.filter((x) => x.level === 'red' || x.level === 'amber')) for (const q of c.questions || []) if (!qs.includes(q)) qs.push(q);
     return (qs.length ? qs : ['What should I offer?', 'How long is my commute?', 'Is it quiet at night?']).slice(0, 3);
   };
 
+  // Investor answers, from the investor checks and Lumo's sums.
+  function investAnswer(q, D) {
+    const { L, F, checks } = D, s = q.toLowerCase(), I = F.inv || {}, V = I.value || {};
+    const get = (id) => checks.find((c) => c.id === id);
+    const m = LUMO.investModel(L, F, D.state.profile);
+    const S = LUMO.short, pct = LUMO.pct;
+    if (/sell for|worth|value|really|offer|pay|guide|underquot/.test(s)) {
+      if (!V.mid) return 'I need Microburbs sales data for this suburb to value it. Add your key in Settings.';
+      const c = V.comps;
+      const g = L.sale?.kind === 'hidden' ? 'There is no price in the ad.' : `The ad says ${L.priceText}.`;
+      return `${g} Similar homes sold for about ${S(V.mid)}${c?.n ? ` (${c.n} sales of ${c.basis} in the last year)` : ''}${V.avm ? `, and the Microburbs valuation is ${S(V.avm.low)} to ${S(V.avm.high)}` : ''}. ${/offer/.test(s) ? `I would start near ${S(Math.round(Math.min(V.mid, L.sale?.price || V.mid) * 0.97 / 5000) * 5000)} and not go far past ${S(V.mid)} without a reason.` : `Plan your budget around ${S(V.mid)}.`}`;
+    }
+    if (/cost|hold|cash ?flow|each week|a week|negative|gear|afford|repay|loan|mortgage/.test(s) && m) {
+      return `At ${S(m.price)} with ${m.set.deposit}% down at ${m.set.rate}%${m.set.io ? ' interest only' : ''}: rent ${M(m.rent)} a week in, loan ${M(m.loanWeek)} and costs ${M(m.costsWeek)} out, so ${m.weekly >= 0 ? `you keep ${M(m.weekly)}` : `you top up about ${M(-m.weekly)}`} a week. Change the settings in Numbers.`;
+    }
+    if (/cash|deposit|stamp|duty|upfront|need to buy/.test(s) && m) return `About ${S(m.upfront.total)}: ${S(m.upfront.deposit)} deposit, ${M(m.upfront.duty)} stamp duty at NSW 2026–27 rates, and about ${M(m.upfront.other)} for legal work and inspections.${m.upfront.lmi ? ' Under 20% down, add mortgage insurance.' : ''}`;
+    if (/rent|appraisal|tenant|lease/.test(s)) { const a = get('appraisal') || get('rent'); return a ? `${a.line} ${a.meaning || ''}` : 'I could not estimate the rent yet.'; }
+    if (/yield|return/.test(s)) { const y = get('yield'); return y ? `${y.line} ${y.meaning}` : 'I need a rent estimate first.'; }
+    if (/growth|rise|play|future|forecast|long term/.test(s)) {
+      const g = get('growth'), y = get('yield');
+      const play = g && y ? (g.level === 'green' && y.level !== 'green' ? 'It looks more like a growth play than a rent play.' : y.level === 'green' && g.level !== 'green' ? 'It looks more like a rent play than a growth play.' : 'It is a mix of both.') : '';
+      return `${g ? g.line + ' ' + (g.next || '') : 'No growth data yet.'} ${play}`.trim();
+    }
+    if (/supply|new homes|oversupply|being built|tower/.test(s)) { const c = get('supply'); return c ? `${c.line} ${c.meaning}` : 'No supply data for this suburb yet.'; }
+    if (/strata|levy|levies|body corp/.test(s)) { const c = get('strata'); return c ? `${c.line} ${c.next}` : 'This is a house, so there are no strata levies.'; }
+    if (/history|sold before|last sold|selling|why/.test(s)) { const c = get('history'); return c ? `${c.line} ${c.meaning}` : 'I have no sale history for this address.'; }
+    if (/land|zon|develop|subdivid|granny|duplex/.test(s)) { const c = get('zoning') || get('land') || get('site'); return c ? `${c.line} ${c.meaning}` : 'I have no land or zoning data for this lot.'; }
+    if (/score/.test(s)) { const sc = LUMO.investScore(L, F, m); return sc.total != null ? `${sc.total} out of 100. ${sc.parts.map((p) => `${p.label} ${p.score}`).join(', ')}. It weighs price and rent return most. It is a way to compare homes, not advice.` : 'Not enough data for a score yet.'; }
+    return null;
+  }
+
   // Rule answers: match the question to what Lumo knows, answer in two or three sentences.
   function rules(q, D) {
+    if (D.mode === 'invest') { const a = investAnswer(q, D); if (a) return a; }
     const { L, F, checks } = D, s = q.toLowerCase(), P = D.state.profile, S = F.sample || {};
     const get = (id) => checks.find((c) => c.id === id);
     const price = get('price');
@@ -90,6 +128,10 @@
       (/safe|night|dark|light|walk home|crime/.test(s) && (has('night') || has('crime'))) ||
       (/quiet|noise|loud|venue|pub|bar/.test(s) && has('quiet')) ||
       (/build|construction|develop|view|tower|da\b/.test(s) && (has('build') || has('views'))) ||
+      (D.mode === 'invest' && /sell for|worth|value|offer|guide|price/.test(s) && has('value')) ||
+      (D.mode === 'invest' && /cost|hold|week|cash|loan/.test(s) && has('cashflow')) ||
+      (D.mode === 'invest' && /growth|play|rise|forecast/.test(s) && has('growth')) ||
+      (D.mode === 'invest' && /rent|appraisal/.test(s) && (has('appraisal') || has('rent'))) ||
       (/similar|cheaper|offer|price|value|rent|drop/.test(s) && has('price')) ||
       (/commute|uni|work|how long/.test(s) && (commute?.id || has('transport'))) ||
       (/station|train|transport|bus/.test(s) && has('transport')) ||
@@ -100,8 +142,10 @@
   LUMO.reply = async (q, D, chat) => {
     if (D.state.settings.anthropicKey) {
       const ctx = {
+        mode: D.mode,
         profile: D.state.profile,
-        listing: { address: D.L.address, price: D.L.price, beds: D.L.beds, baths: D.L.baths, parking: D.L.parking, type: D.L.type, description: (D.L.description || '').slice(0, 2500) },
+        numbers: D.mode === 'invest' ? LUMO.investModel(D.L, D.F, D.state.profile) : undefined,
+        listing: { address: D.L.address, price: D.L.price, priceText: D.L.priceText, forSale: D.mode === 'invest', beds: D.L.beds, baths: D.L.baths, parking: D.L.parking, type: D.L.type, description: (D.L.description || '').slice(0, 2500) },
         checks: D.checks.map(({ id, level, title, line, meaning, next, sources, sample }) => ({ id, level, title, line, meaning, next, sources, sample })),
         facts: { ...D.F, sample: D.F.sample }
       };

@@ -5,12 +5,39 @@ let KB = null;
 async function knowledge() {
   if (KB) return KB;
   const load = async (f) => (await fetch(chrome.runtime.getURL('knowledge/' + f))).json();
-  const [findings, surroundings, claims, sources] = await Promise.all([load('findings.json'), load('surroundings.json'), load('claims.json'), load('data-sources.json')]);
-  KB = { findings, surroundings, claims, sources };
+  const text = async (f) => { try { return await (await fetch(chrome.runtime.getURL('knowledge/' + f))).text(); } catch { return ''; } };
+  const [findings, surroundings, claims, sources, traps, wants] = await Promise.all([load('findings.json'), load('surroundings.json'), load('claims.json'), load('data-sources.json'), text('investor-traps.md'), text('investor-features.md')]);
+  KB = { findings, surroundings, claims, sources, investor: { traps, wants } };
   return KB;
 }
 
+// Investor mode: the same rules, but for someone weighing up a home to buy and rent out.
+function investorPrompt(kb, ctx) {
+  return `You are Lumo, a calm assistant that sits beside a property ad for sale in New South Wales and checks it for an investor.
+Rules:
+- Answer in 1 to 3 short sentences. Plain words. No emojis. No lists unless asked.
+- Use only the facts and numbers below. If something is missing, say what would prove it. Never invent numbers.
+- Say when a number is an estimate. You are not a financial adviser: give the facts, not a buy or sell recommendation.
+- Be fair to the listing: say what is good too.
+
+Listing as shown on the page:
+${JSON.stringify(ctx.listing)}
+
+Lumo's weekly sums at the investor's settings (price, rent, costs, loan, yield, cash to buy):
+${JSON.stringify(ctx.numbers || {})}
+
+Checks Lumo already ran (red = problem, amber = worth checking, green = good sign, info = useful):
+${JSON.stringify(ctx.checks)}
+
+Raw facts (Microburbs market, valuation, sales, rentals, planning):
+${JSON.stringify(ctx.facts).slice(0, 7000)}
+
+Traps investors fall for, and what checks each one:
+${(kb.investor?.traps || '').slice(0, 7000)}`;
+}
+
 function systemPrompt(kb, ctx) {
+  if (ctx.mode === 'invest') return investorPrompt(kb, ctx);
   const top = kb.findings.findings.slice(0, 40).map((f) => `#${f.id} ${f.title}: ${f.check}`).join('\n');
   const cats = [...new Set(kb.surroundings.items.map((i) => i.category))]
     .map((c) => c + ': ' + kb.surroundings.items.filter((i) => i.category === c).map((i) => i.issue).join('; ')).join('\n');

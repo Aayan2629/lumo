@@ -13,26 +13,31 @@
     LUMO.ui.destroy();
     data = null;
     const L = LUMO.extract();
-    log('page', LUMO.pageKind() || 'not a listing', L ? { address: L.address, price: L.price, beds: L.beds, lat: L.lat } : '');
-    if (!L || !L.rent) { if (fromClick) LUMO.ui.note('Open a rental listing and Lumo will check it'); return; }
+    log('page', LUMO.pageKind() || 'not a listing', L ? { address: L.address, price: L.price, beds: L.beds, lat: L.lat, forSale: !L.rent } : '');
+    if (!L) { if (fromClick) LUMO.ui.note('Open a listing and Lumo will check it'); return; }
+    // To rent: checks for a renter. For sale: Investor mode (content/invest.js).
+    const mode = L.rent ? 'rent' : 'invest';
     LUMO.loadFonts();
     LUMO.ui.scanning();
     const [state, kb] = await Promise.all([LUMO.send('state'), LUMO.send('knowledge')]);
     if (id !== run) return;
     if (!state || !kb) { log('no answer from the extension; reload it in chrome://extensions'); LUMO.ui.note('Reload Lumo in chrome://extensions'); return; }
-    const claims = LUMO.findClaims(L.regions.text, kb.claims.claims);
+    const claims = LUMO.findClaims(L.regions.text, claimsFor(kb, mode));
     log(claims.length + ' claims found in the ad:', claims.map((c) => c.text).join(', '));
     LUMO.paintReading(claims);
     const { regions, ...plain } = L;
     const F = (await Promise.race([LUMO.send('facts', { listing: plain }), new Promise((r) => setTimeout(() => r(null), 28000))])) || { sources: [], errors: ['data took too long'] };
     if (id !== run) return;
     log('data from', (F.sources || []).map((x) => x.name).join(', ') || 'nothing', F.errors?.length ? { gaps: F.errors } : '');
-    const checks = LUMO.rules(L, F, state.profile, claims);
-    data = { L, F, checks, claims, state, kb, marks: LUMO.buildMarks(checks, L, claims) };
+    const checks = mode === 'invest' ? LUMO.investRules(L, F, state.profile, claims) : LUMO.rules(L, F, state.profile, claims);
+    data = { mode, L, F, checks, claims, state, kb, marks: LUMO.buildMarks(checks, L, claims) };
     log(checks.length + ' checks,', data.marks.text.length + ' words and ' + data.marks.photos.length + ' photos marked');
     LUMO.ui.render(data);
     watch();
   }
+
+  // Claims marked "rent" only matter in a rental ad, "invest" only in an ad for sale.
+  const claimsFor = (kb, mode) => kb.claims.claims.filter((c) => !c.mode || c.mode === mode);
 
   // Sites like Domain re-render parts of the page. If our words disappear, find them again.
   function watch() {
@@ -46,7 +51,7 @@
         const L = LUMO.extract();
         if (!L) return;
         data.L.regions = L.regions;
-        data.claims = LUMO.findClaims(L.regions.text, data.kb.claims.claims);
+        data.claims = LUMO.findClaims(L.regions.text, claimsFor(data.kb, data.mode));
         data.marks = LUMO.buildMarks(data.checks, data.L, data.claims);
         data.rerender = true;
         LUMO.ui.render(data);

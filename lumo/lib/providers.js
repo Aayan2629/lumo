@@ -1,6 +1,7 @@
 // Data providers. Each one turns a listing into plain facts Lumo can reason about.
 // Add a new API here: write a function that returns facts, then call it in gatherFacts().
 import { cached } from './store.js';
+import { investFacts } from './invest.js';
 
 const MB = 'https://api.microburbs.com.au/v1';
 
@@ -21,13 +22,20 @@ const median = (xs) => {
 };
 
 // ---------- Microburbs ----------
-function microburbs(key) {
-  const get = async (path, days = 7) =>
-    cached('mb:' + path, days, async () => {
-      const res = await fetch(MB + path, { headers: { Authorization: 'Bearer ' + (key || 'test') }, signal: AbortSignal.timeout(9000) });
-      if (!res.ok) throw new Error('Microburbs ' + res.status + ' ' + path);
-      return (await res.json()).data;
-    });
+// snap: a saved copy of answers (demo listings only). Used when the live call fails, so the demo works offline.
+function microburbs(key, snap) {
+  const get = async (path, days = 7) => {
+    try {
+      return await cached('mb:' + path, days, async () => {
+        const res = await fetch(MB + path, { headers: { Authorization: 'Bearer ' + (key || 'test') }, signal: AbortSignal.timeout(9000) });
+        if (!res.ok) throw new Error('Microburbs ' + res.status + ' ' + path);
+        return (await res.json()).data;
+      });
+    } catch (e) {
+      if (snap?.paths && path in snap.paths) { snap.used = true; return snap.paths[path]; }
+      throw e;
+    }
+  };
   return {
     get,
     async sal(name, state) {
@@ -284,8 +292,11 @@ const trimDA = (a) => {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   return [lat, lng, a.NumberOfStoreys || 0, a.NumberOfNewDwellings || 0, a.ApplicationStatus, a.ApplicationType, a.LodgementDate, title(loc.FullAddress), (a.DevelopmentType || []).map((t) => t.DevelopmentType).join('; ').slice(0, 90), Math.round(a.CostOfDevelopment || 0)];
 };
+// Saved copies for the two demo councils, so the demos answer fast and offline.
+const DA_SEEDS = { waverley: 'da-waverley.json', 'lake macquarie': 'da-lake-macquarie.json' };
 async function councilDAs(council) {
-  const seed = /waverley/i.test(council) ? () => fetch(chrome.runtime.getURL('data/da-waverley.json')).then((r) => r.json()).then((j) => j.rows) : null;
+  const file = Object.entries(DA_SEEDS).find(([k]) => council.toLowerCase().includes(k))?.[1];
+  const seed = file ? () => fetch(chrome.runtime.getURL('data/' + file)).then((r) => r.json()).then((j) => j.rows) : null;
   return cached('da:' + council, 7, async () => {
     // The portal can take 10+ seconds. For the demo council, answer from the saved copy after 4 s.
     const live = (async () => {
@@ -471,14 +482,17 @@ export async function gatherFacts(L, S, profile) {
   const F = { sources: [], errors: [], sample: null };
   const note = (name, kind) => { if (!F.sources.find((s) => s.name === name)) F.sources.push({ name, kind }); };
   const tryIt = async (label, fn) => { try { return await fn(); } catch (e) { F.errors.push(label + ': ' + e.message); return null; } };
-  const mb = microburbs(S.microburbsKey);
   let home = L.lat && L.lng ? { lat: L.lat, lng: L.lng } : null;
 
-  // Offline copies for the demo listing, so the demo still works with no internet.
+  // Offline copies for the demo listings, so the demos still work with no internet.
+  // A demo page can name its own saved answers (cache) and turn off the sample facts (sample: false).
+  const cacheFile = /^[\w-]+\.json$/.test(L.cache || '') ? L.cache : 'bondi-sandbox.json';
   const demoP = L.demo ? Promise.all([
-    tryIt('snapshot', async () => (await fetch(chrome.runtime.getURL('demo/cache/bondi-sandbox.json'))).json()),
-    tryIt('sample', async () => (await fetch(chrome.runtime.getURL('demo/facts.json'))).json())
+    tryIt('snapshot', async () => (await fetch(chrome.runtime.getURL('demo/cache/' + cacheFile))).json()),
+    L.sample === false ? null : tryIt('sample', async () => (await fetch(chrome.runtime.getURL('demo/facts.json'))).json())
   ]) : Promise.resolve([null, null]);
+  const snapFirst = L.demo ? (await demoP)[0] : null;
+  const mb = microburbs(S.microburbsKey, snapFirst);
 
   // 1. Microburbs: suburb data, and property data when the address resolves.
   const mbP = (async () => {
@@ -589,6 +603,13 @@ export async function gatherFacts(L, S, profile) {
       if (lit) Object.assign(F.nightWalk, lit);
     }
   }
+  // 4. Listings for sale: what an investor needs (value, rent, yield, growth, supply). See lib/invest.js.
+  if (L.rent === false) {
+    const inv = await tryIt('investor data', () => investFacts(L, S, F, { mb, tryIt, note, home, daRows: F.council ? () => councilDAs(F.council.council) : null }));
+    if (inv) F.inv = inv;
+  }
+  // Demo answered from its saved copy (no internet): say so on every Microburbs source.
+  if (snapFirst?.used) F.sources.forEach((s) => { if (/Microburbs/.test(s.name)) s.kind = 'snapshot'; });
   if (F.sample) note('Sample data', 'sample');
   return F;
 }

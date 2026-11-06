@@ -5,7 +5,7 @@ import { gatherFacts } from './lib/providers.js';
 import { askLLM, speak, knowledge } from './lib/ai.js';
 
 const LISTING_SITES = /^https:\/\/www\.(domain|realestate)\.com\.au\//;
-const CONTENT = ["content/core.js", "content/extract.js", "content/rules.js", "content/anchor.js", "content/ui.css.js", "content/ui.js", "content/chat.js", "content/main.js"];
+const CONTENT = ["content/core.js", "content/extract.js", "content/rules.js", "content/invest.js", "content/anchor.js", "content/ui.css.js", "content/ui.js", "content/chat.js", "content/main.js"];
 
 // Chrome only adds content scripts to pages loaded after the extension. Add Lumo to tabs already open.
 async function inject(tabId) {
@@ -58,7 +58,14 @@ const handlers = {
     await chrome.storage.local.set({ saved: next });
     return next;
   },
-  async openOptions() { chrome.runtime.openOptionsPage(); return true; }
+  async openOptions() { chrome.runtime.openOptionsPage(); return true; },
+  // Investor settings from the Numbers tab (deposit, rate, loan type). Kept for every home.
+  async setInvest({ invest }) {
+    const { profile } = await getAll();
+    const clean = { deposit: Math.max(0, Math.min(100, +invest.deposit || 20)), rate: Math.max(0, Math.min(20, +invest.rate || 6)), io: !!invest.io, mgmt: Math.max(0, Math.min(20, +(invest.mgmt ?? 7))) };
+    await chrome.storage.local.set({ profile: { ...profile, invest: clean } });
+    return clean;
+  }
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {

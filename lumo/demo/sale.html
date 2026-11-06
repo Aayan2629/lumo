@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="lumo-demo" content="1">
+<title>27 Arlington Street, Belmont North NSW 2280 | Demo sale listing</title>
+<link rel="stylesheet" href="demo.css">
+<!-- The listing's own data, the way real sites embed it. Lumo reads this first.
+     rent:false = for sale, so Lumo opens in Investor mode. cache = saved Microburbs answers for offline use. -->
+<script type="application/json" id="lumo-demo-data">
+{ "address": "27 Arlington Street, Belmont North NSW 2280", "suburb": "Belmont North", "state": "NSW", "postcode": "2280",
+  "priceText": "Offers over $699,000", "beds": 2, "baths": 1, "parking": 1,
+  "type": "House", "lat": -33.015986, "lng": 151.676975, "rent": false,
+  "gnaf": "GANSW704074813", "cache": "belmont-north-sandbox.json", "sample": false }
+</script>
+</head>
+<body>
+<div class="note">Demo sale listing for testing Lumo's Investor mode. The ad, photos and agent are made up. Market data comes live from the Microburbs sandbox, with a saved copy for offline use.</div>
+<header class="bar">
+  <div class="wrap bar-in">
+    <span class="brand">homeview</span>
+    <nav><a>Buy</a><a>Rent</a><a>Sold</a><a>Agents</a></nav>
+    <span class="sign">Sign in</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="crumbs">Buy <span>/</span> NSW <span>/</span> Belmont North <span>/</span> 27 Arlington Street</div>
+
+  <section class="gallery" data-lumo="gallery">
+    <img class="g1" src="img/living.jpg" alt="Living room">
+    <img class="g2" src="img/bedroom.jpg" alt="Bedroom">
+    <img class="g3" src="img/kitchen.jpg" alt="Kitchen">
+    <span class="count">1 / 14</span>
+  </section>
+
+  <div class="cols">
+    <article>
+      <div class="price" data-lumo="price">Offers over $699,000</div>
+      <h1>27 Arlington Street, Belmont North NSW 2280</h1>
+      <ul class="facts"><li><b>2</b> Beds</li><li><b>1</b> Bath</li><li><b>1</b> Parking</li><li>House</li><li>620 m²</li></ul>
+
+      <div class="block">
+        <h2 data-lumo="headline">Blue-chip investment with development potential</h2>
+        <div data-lumo="description">
+          <p>Priced to sell, this tidy two bedroom home on a level 620 m² block is a rare opportunity in a tightly held pocket of Belmont North. Strong rental demand and a rental appraisal of $720 per week make it a set and forget investment.</p>
+          <p>Inside: a bright lounge, an updated kitchen with gas cooking, two good-sized bedrooms and a renovated bathroom. Outside: a carport, a garden shed and a big backyard with room to add a granny flat.</p>
+          <p>Walk to the shops, schools and the bus, with Lake Macquarie and the beaches minutes away. Motivated vendor. Won't last.</p>
+        </div>
+      </div>
+
+      <div class="block">
+        <h3>Property features</h3>
+        <ul class="feat" data-lumo="features">
+          <li>620 m² level block</li><li>Carport</li><li>Updated kitchen</li><li>Renovated bathroom</li><li>Garden shed</li><li>Council rates $520 per quarter</li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Open homes</h3>
+        <div class="insp"><span>Sat 14 Nov</span><b>11:00 – 11:30 am</b></div>
+        <div class="insp"><span>Thu 19 Nov</span><b>5:00 – 5:20 pm</b></div>
+      </div>
+    </article>
+
+    <aside>
+      <div class="agent">
+        <div class="avatar">JR</div>
+        <div><b>Jordan Reid</b><span>Lakeside Realty (demo)</span></div>
+      </div>
+      <button class="btn">Email agent</button>
+      <button class="btn ghost">Request contract</button>
+      <p class="small">Private sale · Contract available</p>
+    </aside>
+  </div>
+</main>
+<footer class="wrap foot">Made-up page for the Microburbs Hackathon. Not a real listing.</footer>
+<script src="boot.js"></script>
+</body>
+</html>

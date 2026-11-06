@@ -27,7 +27,7 @@ function save() {
 }
 
 // ---------- tabs ----------
-const tabs = ['you', 'places', 'id', 'data'];
+const tabs = ['you', 'places', 'id', 'invest', 'data'];
 function show(name) {
   $$('.seg button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   $$('section.tab').forEach((s) => (s.hidden = s.dataset.tab !== name));
@@ -170,6 +170,21 @@ chrome.storage.local.get('rentcsv').then(({ rentcsv }) => { if (rentcsv) { $('#c
 
 $('#demo').onclick = () => chrome.tabs.create({ url: 'https://www.domain.com.au/rent/bondi-nsw-2026/?ptype=apartment-unit-flat' });
 $('#offline').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/listing.html') });
+$('#offlineSale').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/sale.html') });
+
+// ---------- Investor ----------
+const V = (P.invest = { deposit: 20, rate: 6.0, io: true, mgmt: 7, ...(P.invest || {}) });
+const inv = () => {
+  $('#depOut').textContent = V.deposit + '%';
+  $('#rateOut').textContent = (+V.rate).toFixed(2) + '%';
+  $('#mgmtOut').textContent = V.mgmt + '% of rent';
+  $$('#io button').forEach((b) => b.classList.toggle('on', (b.dataset.v === '1') === !!V.io));
+};
+$('#dep').value = V.deposit; $('#rate').value = V.rate; $('#mgmt').value = V.mgmt; inv();
+$('#dep').oninput = (e) => { V.deposit = +e.target.value; inv(); save(); };
+$('#rate').oninput = (e) => { V.rate = +e.target.value; inv(); save(); };
+$('#mgmt').oninput = (e) => { V.mgmt = +e.target.value; inv(); save(); };
+$$('#io button').forEach((b) => (b.onclick = () => { V.io = b.dataset.v === '1'; inv(); save(); }));
 
 // Every key gets a live status next to its name: checked when the page opens and again as you paste.
 // Each test is a free call that costs nothing.

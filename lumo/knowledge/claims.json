@@ -1,5 +1,5 @@
 {
- "about": "Words in a rental ad that Lumo tests. Each claim points at a finding id in findings.json. Patterns are case-insensitive regular expressions. Add new claims here; no code change needed.",
+ "about": "Words in a listing that Lumo tests. Each claim points at a finding id (findings.json for rentals, investor-traps.md for listings for sale). Patterns are case-insensitive regular expressions. mode: 'rent' = rental ads only, 'invest' = ads for sale only, no mode = both. Add new claims here; no code change needed.",
  "claims": [
   {
    "key": "quiet",
@@ -58,7 +58,8 @@
     "exceptional value",
     "rare opportunity",
     "unbeatable value"
-   ]
+   ],
+   "mode": "rent"
   },
   {
    "key": "parking",
@@ -151,6 +152,134 @@
     "air[- ]?con(?:ditioning|ditioned)?\\b",
     "ducted (?:air|cooling)",
     "split[- ]system"
+   ]
+  },
+  {
+   "key": "appraisal",
+   "finding": 11,
+   "mode": "invest",
+   "label": "Rent appraisal",
+   "patterns": [
+    "rental (?:appraisal|estimate|return|potential|income)(?: of| is| at| approx\\.?)?(?: approximately)?\\s*\\$\\s?[\\d,]{3,6}(?:\\s*(?:-|–|to)\\s*\\$?\\s?[\\d,]{3,6})?(?:\\s*(?:per week|p/?w|pw|a week|weekly))?",
+    "currently (?:leased|tenanted|rented)(?: at| for)?\\s*\\$\\s?[\\d,]{3,6}(?:\\s*(?:per week|p/?w|pw|a week|weekly))?",
+    "rental (?:appraisal|estimate|return|potential)",
+    "currently (?:leased|tenanted|rented)"
+   ]
+  },
+  {
+   "key": "yield",
+   "finding": 12,
+   "mode": "invest",
+   "label": "Yield",
+   "patterns": [
+    "high[- ]yield(?:ing)?",
+    "great (?:investment|return|yield)",
+    "investor(?:s|'s)? (?:alert|special|opportunity|delight|dream)",
+    "positive(?:ly)? (?:cash ?flow|geared)",
+    "strong (?:return|yield|rental return)",
+    "solid (?:return|investment)",
+    "set and forget"
+   ]
+  },
+  {
+   "key": "growth",
+   "finding": 21,
+   "mode": "invest",
+   "label": "Growth",
+   "patterns": [
+    "blue[- ]chip",
+    "growth (?:suburb|area|corridor|hotspot|potential)",
+    "capital growth",
+    "gentrif\\w+",
+    "up[- ]and[- ]coming",
+    "next big thing",
+    "booming"
+   ]
+  },
+  {
+   "key": "demand",
+   "finding": 19,
+   "mode": "invest",
+   "label": "Rental demand",
+   "patterns": [
+    "(?:strong|high|huge|constant) (?:rental |tenant )?demand",
+    "always in demand",
+    "never vacant",
+    "easy to (?:rent|lease)",
+    "sought[- ]after (?:by|with) tenants"
+   ]
+  },
+  {
+   "key": "scarce",
+   "finding": 38,
+   "mode": "invest",
+   "label": "Scarce",
+   "patterns": [
+    "tightly held",
+    "rare (?:opportunity|offering|find)",
+    "limited (?:release|supply|stock)",
+    "\\bscarce\\b",
+    "seldom (?:available|offered)",
+    "first time (?:offered|on the market)",
+    "rarely (?:available|offered)"
+   ]
+  },
+  {
+   "key": "pressure",
+   "finding": 9,
+   "mode": "invest",
+   "label": "Pressure",
+   "patterns": [
+    "motivated (?:vendor|seller)s?",
+    "must (?:be )?sold?",
+    "won'?t last",
+    "multiple offers",
+    "selling fast",
+    "urgent sale",
+    "vendors? (?:says sell|wants? it sold|relocating)",
+    "don'?t miss (?:out|this)",
+    "act (?:fast|quickly|now)"
+   ]
+  },
+  {
+   "key": "pricedToSell",
+   "finding": 4,
+   "mode": "invest",
+   "label": "Priced to sell",
+   "patterns": [
+    "priced to sell",
+    "below (?:bank )?valuation",
+    "\\bbargain\\b",
+    "well below (?:market|value)",
+    "price (?:drop|reduction)",
+    "\\breduced\\b",
+    "must be sold"
+   ]
+  },
+  {
+   "key": "devPotential",
+   "finding": 84,
+   "mode": "invest",
+   "label": "Development potential",
+   "patterns": [
+    "development potential",
+    "(?:land|site) bank",
+    "knock[- ]?down(?: and rebuild)?",
+    "potential to (?:subdivide|build|develop|extend|add)",
+    "(?:dual occ(?:upancy)?|duplex|granny flat|subdivision) potential",
+    "build your dream",
+    "\\brebuild\\b",
+    "\\bDA approved\\b"
+   ]
+  },
+  {
+   "key": "strata",
+   "finding": 71,
+   "mode": "invest",
+   "label": "Strata",
+   "patterns": [
+    "strata(?: levies| levy| fees| rates)?\\s*(?::|of|approx\\.?|approximately|is|are)?\\s*\\$\\s?[\\d,]+(?:\\.\\d+)?(?:\\s*(?:per quarter|/\\s*q(?:tr)?|pq|quarterly|per annum|p\\.?a\\.?|a year|per year|yearly|annually))?",
+    "body corporate"
    ]
   }
  ]

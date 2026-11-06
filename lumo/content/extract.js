@@ -5,7 +5,7 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const text = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
 
-  // Is this page one rental listing?
+  // Is this page one listing (to rent or to buy)?
   LUMO.pageKind = () => {
     const h = location.hostname, p = location.pathname;
     if ($('meta[name="lumo-demo"]')) return 'demo';
@@ -42,7 +42,7 @@
       return {
         address: s.address, suburb: cp.suburb, state: cp.stateAbbreviation || cp.state || (s.address || '').match(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b/)?.[1], postcode: cp.postcode,
         priceText: s.title, price: LUMO.parseRent(s.title), beds: s.beds, baths: s.baths, parking: s.parking,
-        type: s.propertyType || cp.propertyType, rent: (s.listingType || s.mode) === 'rent',
+        type: s.propertyType || cp.propertyType, rent: /rent/i.test(s.listingType || s.mode || cp.listingType || '') || (!/buy|sale|sold/i.test(s.listingType || s.mode || '') && !!LUMO.parseRent(s.title)),
         description: Array.isArray(cp.description) ? cp.description.join('\n') : cp.description,
         features: (cp.structuredFeatures || []).map((f) => f.name).concat(cp.features || []),
         // The listing's own pin first; a deep search could pick up a nearby listing's coordinates.
@@ -102,13 +102,14 @@
     return top > 250 ? best : null;
   }
 
-  // Fallback: the smallest element near the top whose text is a weekly rent.
-  function priceElement() {
+  // Fallback: the smallest element near the top whose text is a weekly rent (or, for sale, a price line).
+  const isPrice = (t, sale) => (sale ? LUMO.parseSale && (LUMO.parseSale(t).price || /auction|contact agent|price on request|expressions of interest/i.test(t)) : LUMO.parseRent(t));
+  function priceElement(sale) {
     const el = first(PRICE);
-    if (el && LUMO.parseRent(text(el))) return el;
+    if (el && isPrice(text(el), sale)) return el;
     const cands = $$('h1,h2,h3,h4,p,span,div,strong').filter((e) => {
       const t = text(e);
-      if (t.length > 60 || !LUMO.parseRent(t)) return false;
+      if (t.length > 60 || !isPrice(t, sale)) return false;
       const r = e.getBoundingClientRect();
       return r.top + scrollY < 1600 && r.width > 0;
     });
@@ -127,7 +128,9 @@
     const kind = LUMO.pageKind();
     if (!kind) return null;
     const data = (kind === 'domain' ? fromDomain() : kind === 'rea' ? fromRea() : fromDemo()) || {};
-    const priceEl = priceElement();
+    // To rent or to buy? The page's data says; if it doesn't, a weekly price means rent.
+    const sale = data.rent === false || (data.rent == null && /\/(buy|sale)\b|for-sale/i.test(location.pathname));
+    const priceEl = priceElement(sale);
     const desc = first(DESC) || biggestTextBlock();
     const L = {
       site: kind, url: location.href.split('#')[0], demo: kind === 'demo',
@@ -135,9 +138,17 @@
       price: data.price || LUMO.parseRent(text(priceEl)), priceText: data.priceText || text(priceEl),
       beds: data.beds, baths: data.baths, parking: data.parking, type: data.type,
       lat: data.lat, lng: data.lng, gnaf: data.gnaf,
-      description: data.description || text(desc), rent: data.rent !== false,
-      photo: (LUMO.photos()[0] || {}).currentSrc || ''
+      description: data.description || text(desc), rent: !sale,
+      features: data.features?.length ? data.features : $$('li', first(FEAT) || document.createElement('ul')).map(text),
+      photo: (LUMO.photos()[0] || {}).currentSrc || '',
+      // Demo pages can name their own saved data (see lib/providers.js).
+      ...(kind === 'demo' ? { cache: data.cache, sample: data.sample } : {})
     };
+    if (sale) {
+      L.sale = LUMO.parseSale(data.priceText || text(priceEl));
+      L.price = L.sale.price;
+      L.priceText = data.priceText || text(priceEl);
+    }
     // Fill gaps from visible text
     const blob = text(document.body).slice(0, 20000);
     if (L.beds == null) L.beds = Number(blob.match(/(\d)\s*(?:bed(?:room)?s?|br)\b/i)?.[1]) || null;

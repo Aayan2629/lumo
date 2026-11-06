@@ -30,6 +30,7 @@ export const DEFAULT_PROFILE = {
   beds: 1,
   priorities: ['value', 'transport', 'quiet', 'safety', 'light'],
   renterId: { job: '', employer: '', incomeShare: 30, references: [], documents: {} },
+  invest: { deposit: 20, rate: 6.0, io: true, mgmt: 7 },   // Investor mode: your loan settings (Numbers tab and Settings)
   onboarded: false
 };
 
