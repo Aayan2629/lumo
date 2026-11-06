@@ -1,0 +1,93 @@
+{
+  "manifest_version": 3,
+  "name": "Lumo",
+  "short_name": "Lumo",
+  "version": "0.5.1",
+  "description": "Reads the rental ad you are looking at and checks its claims against real data.",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_title": "Lumo",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_page": "options/index.html",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.realestate.com.au/*",
+    "https://www.domain.com.au/*",
+    "https://api.microburbs.com.au/*",
+    "https://overpass-api.de/*",
+    "https://api.anthropic.com/*",
+    "https://api.transport.nsw.gov.au/*",
+    "https://routes.googleapis.com/*",
+    "https://api.elevenlabs.io/*",
+    "https://routing.openstreetmap.de/*",
+    "https://overpass.kumi.systems/*",
+    "https://overpass.private.coffee/*",
+    "https://maps.mail.ru/*",
+    "https://portal.spatial.nsw.gov.au/*",
+    "https://api.apps1.nsw.gov.au/*",
+    "https://data.api.abs.gov.au/*",
+    "https://services1.arcgis.com/*",
+    "https://graph.mapillary.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.domain.com.au/*",
+        "https://www.realestate.com.au/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "content/core.js",
+        "content/extract.js",
+        "content/rules.js",
+        "content/anchor.js",
+        "content/ui.css.js",
+        "content/ui.js",
+        "content/chat.js",
+        "content/main.js"
+      ],
+      "css": [
+        "content/highlights.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/*.woff2",
+        "icons/*.png",
+        "knowledge/*.json",
+        "map/*"
+      ],
+      "matches": [
+        "https://www.domain.com.au/*",
+        "https://www.realestate.com.au/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumo</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i><i></i></div>
+<main>
+  <header class="top">
+    <svg class="logo" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true"><defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1C1C1E"/><stop offset="1" stop-color="#2C2C30"/></linearGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3D58C"/><stop offset="1" stop-color="#B98F4F"/></linearGradient></defs><rect width="512" height="512" rx="116" fill="url(#a)"/><path d="M120 236 L256 124 L392 236" fill="none" stroke="url(#b)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/><path d="M196 230 V384 H324" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/><circle cx="330" cy="296" r="22" fill="#F3D58C"/></svg>
+    <div><h1>Lumo</h1><p>Checks every rental ad you open.</p></div>
+    <span class="saved" id="saved">Saved</span>
+  </header>
+
+  <nav class="seg glass" role="tablist">
+    <span class="thumb"></span>
+    <button role="tab" data-tab="you" aria-selected="true">You</button>
+    <button role="tab" data-tab="places">Places</button>
+    <button role="tab" data-tab="id">Renter ID</button>
+    <button role="tab" data-tab="data">Data</button>
+  </nav>
+
+  <!-- You -->
+  <section class="tab" data-tab="you">
+    <div class="card glass">
+      <label class="field"><span>Name</span><input id="name" autocomplete="given-name" placeholder="First name"></label>
+      <div class="field"><span>You are</span>
+        <div class="pills" id="role"><button data-v="student">Studying</button><button data-v="worker">Working</button><button data-v="both">Both</button></div>
+      </div>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Weekly budget</span><b class="big num" id="budgetOut"></b></div>
+      <input type="range" id="budget" min="200" max="2500" step="10">
+      <div class="split">
+        <div class="field"><span>Bedrooms</span><div class="step"><button data-step="-1" aria-label="Fewer">&minus;</button><b class="num" id="beds"></b><button data-step="1" aria-label="More">+</button></div></div>
+        <label class="field toggle"><span>I have a car</span><input type="checkbox" id="car"><i></i></label>
+      </div>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Your gyms</span><em>Pick any</em></div>
+      <div class="chips" id="gym"></div>
+      <div class="field" style="margin-top:14px"><span>Your supermarkets</span><em>Pick any</em></div>
+      <div class="chips" id="supermarket"></div>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>What matters most</span><em>Tap in order</em></div>
+      <div class="chips rank" id="priorities"></div>
+    </div>
+  </section>
+
+  <!-- Places -->
+  <section class="tab" data-tab="places" hidden>
+    <div class="card glass">
+      <p class="lead">Where you go each week. Lumo times every listing to these.</p>
+      <div id="places"></div>
+      <button class="add" id="addPlace">Add a place</button>
+    </div>
+  </section>
+
+  <!-- Renter ID -->
+  <section class="tab" data-tab="id" hidden>
+    <div class="idcard" id="idcard"></div>
+    <div class="card glass">
+      <label class="field"><span>Job or course</span><input id="job" placeholder="Data Science student"></label>
+      <label class="field"><span>Employer or uni</span><input id="employer" placeholder="UNSW"></label>
+      <div class="field"><span>Rent as share of income</span><b class="num" id="shareOut"></b></div>
+      <input type="range" id="share" min="10" max="60" step="1">
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Documents ready</span><b class="num" id="points"></b></div>
+      <div id="docs"></div>
+      <p class="hint">Mark what you have ready. Lumo doesn't upload files. Sharing with agents comes later.</p>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>References</span></div>
+      <div id="refs"></div>
+      <button class="add" id="addRef">Add a reference</button>
+    </div>
+  </section>
+
+  <!-- Data -->
+  <section class="tab" data-tab="data" hidden>
+    <div class="card glass">
+      <div class="field"><span>Microburbs API key</span><b class="status" id="mbStatus"></b></div>
+      <div class="row"><input id="microburbsKey" placeholder="test" spellcheck="false"><button class="ghost" id="mbTest">Test</button></div>
+      <p class="hint">"test" uses the free sandbox: Bondi and a few other suburbs only. Paste your hackathon key for all of Sydney.</p>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Your rent model</span><b class="status" id="csvStatus"></b></div>
+      <input id="rentModelUrl" placeholder="https://your-model/predict (optional)" spellcheck="false">
+      <label class="file"><input type="file" id="csv" accept=".csv">Import rents CSV</label>
+      <p class="hint">Use the same CSV you submit: gnaf_id, rent_with_car_space, rent_without_car_space. Lumo then shows your model's fair rent.</p>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>Lumo's voice (optional)</span></div>
+      <div class="field sub"><span>Anthropic API key</span><b class="status" data-st="anthropicKey"></b></div>
+      <input id="anthropicKey" type="password" placeholder="sk-ant-…" spellcheck="false">
+      <input id="anthropicModel" placeholder="claude-haiku-5-5" spellcheck="false">
+      <p class="hint">With a key, Lumo answers in its own words using its knowledge files. Without one, it answers from its rules.</p>
+    </div>
+    <div class="card glass">
+      <div class="field"><span>More data (optional)</span></div>
+      <div class="field sub"><span>Transport for NSW</span><b class="status" data-st="tfnswKey"></b></div>
+      <input id="tfnswKey" type="password" placeholder="Real train and bus times, night ride home" spellcheck="false">
+      <div class="field sub"><span>Mapillary</span><b class="status" data-st="mapillaryToken"></b></div>
+      <input id="mapillaryToken" type="password" placeholder="MLY|… street photos" spellcheck="false">
+      <div class="field sub"><span>Google Maps</span><b class="status" data-st="googleKey"></b></div>
+      <input id="googleKey" type="password" placeholder="Optional, needs billing" spellcheck="false">
+      <div class="field sub"><span>ElevenLabs</span><b class="status" data-st="elevenLabsKey"></b></div>
+      <input id="elevenLabsKey" type="password" placeholder="Spoken replies" spellcheck="false">
+      <input id="elevenLabsVoice" placeholder="ElevenLabs voice ID" spellcheck="false">
+      <p class="hint">Each key is checked as you paste it. Green means Lumo is using it.</p>
+    </div>
+    <div class="card glass">
+      <label class="field toggle"><span>Glow on photos</span><input type="checkbox" id="photoEdges"><i></i></label>
+      <label class="field toggle"><span>Light up the ad when it opens</span><input type="checkbox" id="introScan"><i></i></label>
+      <label class="field toggle"><span>Speak and listen</span><input type="checkbox" id="voice"><i></i></label>
+      <label class="field toggle"><span>Use OpenStreetMap when data is missing</span><input type="checkbox" id="useOsm"><i></i></label>
+    </div>
+    <p class="hint center">Keys stay in this browser. Lumo sends them only to the service they belong to.</p>
+  </section>
+
+  <a class="demo" id="demo">Try it on real Bondi rentals</a>
+  <p class="hint center" style="margin-top:12px"><a id="offline" style="color:inherit;cursor:pointer;text-decoration:underline">Offline demo</a> for when there is no internet.</p>
+</main>
+<script type="module" src="options.js"></script>
+</body>
+</html>

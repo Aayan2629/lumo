@@ -1,0 +1,26 @@
+{
+  "about": "Sample facts for the demo listing only, for things the free sandbox can't give (this flat's own history, sunlight, approved buildings, commute). Lumo labels every check that uses these as SAMPLE. Area data on the demo (rents, venues, crime, flood, days on market) is live from the Microburbs sandbox.",
+  "history": [
+    { "date": "2026-11-03", "price": 1550 },
+    { "date": "2025-09-18", "price": 1350 },
+    { "date": "2024-10-02", "price": 1300 },
+    { "date": "2023-11-20", "price": 1220 },
+    { "date": "2022-12-05", "price": 1100 }
+  ],
+  "light": {
+    "level": "amber", "tag": "Light", "title": "Light is partly blocked",
+    "line": "A 7-storey block stands 18 m to the north.",
+    "meaning": "A taller building to the north takes most of the winter sun. Photos are usually taken on the brightest side.",
+    "next": "Visit around 2 pm and see which rooms get direct sun.",
+    "photo": "living.jpg"
+  },
+  "view": {
+    "level": "amber", "tag": "View", "title": "Ocean glimpse may not last",
+    "line": "A 4-storey building is approved two doors east.",
+    "meaning": "If it goes ahead, the glimpse in this photo is likely gone within two years.",
+    "next": "Check the council DA tracker for the start date.",
+    "photo": "lounge.jpg"
+  },
+  "station": { "name": "Bondi Junction", "d": 1880, "lat": -33.8917, "lng": 151.2478, "mode": "train" },
+  "commute": { "to": "UNSW Kensington", "lat": -33.9173, "lng": 151.2313, "minutes": 34, "how": "Bus via Bondi Junction, leaving 8 am Monday." }
+}

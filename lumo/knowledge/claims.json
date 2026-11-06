@@ -1,0 +1,157 @@
+{
+ "about": "Words in a rental ad that Lumo tests. Each claim points at a finding id in findings.json. Patterns are case-insensitive regular expressions. Add new claims here; no code change needed.",
+ "claims": [
+  {
+   "key": "quiet",
+   "finding": 51,
+   "label": "Quiet",
+   "patterns": [
+    "\\bquiet(?: street| location| pocket| enclave| area| setting)?\\b",
+    "\\bpeaceful\\b",
+    "\\btranquil\\b",
+    "\\bserene\\b",
+    "\\bprivate retreat\\b",
+    "\\boasis\\b"
+   ]
+  },
+  {
+   "key": "transport",
+   "finding": 41,
+   "label": "Close to transport",
+   "patterns": [
+    "close to (?:public )?transport",
+    "moments? (?:from|to) (?:the )?(?:station|train|transport|buses|bus)",
+    "steps? (?:from|to) (?:the )?(?:station|train|transport|buses|bus)",
+    "walk(?:ing distance)? to (?:the )?(?:station|train|light rail|metro)",
+    "transport at your door(?:step)?",
+    "easy access to (?:public )?transport",
+    "\\d+ minutes? (?:walk )?to (?:the )?(?:station|train|metro)",
+    "transport (?:is )?at your fingertips"
+   ]
+  },
+  {
+   "key": "light",
+   "finding": 62,
+   "label": "Light",
+   "patterns": [
+    "light[- ]filled",
+    "sun[- ]drenched",
+    "sun[- ]filled",
+    "sun[- ]soaked",
+    "north[- ]facing",
+    "natural light",
+    "abundant light",
+    "bright and airy",
+    "flooded with (?:natural )?light"
+   ]
+  },
+  {
+   "key": "value",
+   "finding": 2,
+   "label": "Value",
+   "patterns": [
+    "great value",
+    "rare value",
+    "priced to lease",
+    "won'?t last",
+    "bargain",
+    "exceptional value",
+    "rare opportunity",
+    "unbeatable value"
+   ]
+  },
+  {
+   "key": "parking",
+   "finding": 11,
+   "label": "Parking",
+   "patterns": [
+    "secure (?:car ?)?(?:park(?:ing)?|space)",
+    "car ?space",
+    "lock[- ]up garage",
+    "basement parking",
+    "off[- ]street parking"
+   ]
+  },
+  {
+   "key": "views",
+   "finding": 63,
+   "label": "Views",
+   "patterns": [
+    "(?:ocean|harbour|city|water|district|park) (?:views?|glimpses?)",
+    "\\bpanoramic\\b",
+    "\\bglimpses\\b"
+   ]
+  },
+  {
+   "key": "shops",
+   "finding": 93,
+   "label": "Close to shops",
+   "patterns": [
+    "close to (?:shops|cafes|amenities|everything)",
+    "moments? (?:from|to) (?:the )?(?:shops|cafes|beach)",
+    "walk to (?:the )?(?:shops|cafes|beach)",
+    "cafes at your door(?:step)?"
+   ]
+  },
+  {
+   "key": "safe",
+   "finding": 73,
+   "label": "Safe",
+   "patterns": [
+    "\\bsafe\\b",
+    "secure building",
+    "security entry",
+    "family[- ]friendly"
+   ]
+  },
+  {
+   "key": "renovated",
+   "finding": 40,
+   "label": "Renovated",
+   "patterns": [
+    "newly renovated",
+    "brand[- ]new",
+    "freshly (?:painted|renovated)",
+    "fully renovated",
+    "as new"
+   ]
+  },
+  {
+   "key": "beach",
+   "finding": 95,
+   "label": "Beach",
+   "patterns": [
+    "\\bbeach\\b"
+   ]
+  },
+  {
+   "key": "cafes",
+   "finding": 89,
+   "label": "Cafes",
+   "patterns": [
+    "\\bcaf(?:e|é)s\\b",
+    "caf(?:e|é) culture"
+   ]
+  },
+  {
+   "key": "laundry",
+   "finding": 97,
+   "label": "Laundry",
+   "patterns": [
+    "internal laundry",
+    "laundry in (?:the )?(?:unit|apartment)",
+    "european laundry"
+   ]
+  },
+  {
+   "key": "aircon",
+   "finding": 68,
+   "label": "Air conditioning",
+   "patterns": [
+    "air[- ]?con(?:ditioning|ditioned)?\\b",
+    "ducted (?:air|cooling)",
+    "split[- ]system"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="lumo-demo" content="1">
+<title>6/140 Bondi Road, Bondi NSW 2026 | Demo listing</title>
+<link rel="stylesheet" href="demo.css">
+<!-- The listing's own data, the way real sites embed it. Lumo reads this first. -->
+<script type="application/json" id="lumo-demo-data">
+{ "address": "6/140 Bondi Road, Bondi NSW 2026", "suburb": "Bondi", "state": "NSW", "postcode": "2026",
+  "price": 1550, "priceText": "$1,550 per week", "beds": 2, "baths": 1, "parking": 1,
+  "type": "Apartment / Unit / Flat", "lat": -33.8946, "lng": 151.2679, "rent": true }
+</script>
+</head>
+<body>
+<div class="note">Demo listing for testing Lumo. The ad, photos and agent are made up. Area data comes live from the Microburbs sandbox.</div>
+<header class="bar">
+  <div class="wrap bar-in">
+    <span class="brand">rentview</span>
+    <nav><a>Rent</a><a>Buy</a><a>Sold</a><a>Agents</a></nav>
+    <span class="sign">Sign in</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="crumbs">Rent <span>/</span> NSW <span>/</span> Bondi <span>/</span> 6/140 Bondi Road</div>
+
+  <section class="gallery" data-lumo="gallery">
+    <img class="g1" src="img/living.jpg" alt="Living room with large windows">
+    <img class="g2" src="img/lounge.jpg" alt="Lounge and balcony">
+    <img class="g3" src="img/kitchen.jpg" alt="Kitchen">
+    <span class="count">1 / 12</span>
+  </section>
+
+  <div class="cols">
+    <article>
+      <div class="price" data-lumo="price">$1,550 per week</div>
+      <h1>6/140 Bondi Road, Bondi NSW 2026</h1>
+      <ul class="facts"><li><b>2</b> Beds</li><li><b>1</b> Bath</li><li><b>1</b> Parking</li><li>Apartment</li></ul>
+
+      <div class="block">
+        <h2 data-lumo="headline">Light-filled two bedroom with ocean glimpses</h2>
+        <div data-lumo="description">
+          <p>Positioned on a quiet street in the heart of Bondi, this sun-drenched apartment offers relaxed coastal living with ocean glimpses from the balcony.</p>
+          <p>The open living area flows to a private balcony, and both bedrooms have built-in wardrobes. The kitchen has stone benches, gas cooking and a dishwasher. Freshly painted throughout.</p>
+          <p>Close to transport, cafes and the beach, with a secure car space and internal laundry. Rare value in a tightly held pocket. Won't last.</p>
+        </div>
+      </div>
+
+      <div class="block">
+        <h3>Property features</h3>
+        <ul class="feat" data-lumo="features">
+          <li>Secure car space</li><li>Internal laundry</li><li>Balcony</li><li>Built-in wardrobes</li><li>Dishwasher</li><li>Gas cooking</li>
+        </ul>
+      </div>
+
+      <div class="block">
+        <h3>Inspections</h3>
+        <div class="insp"><span>Sat 14 Nov</span><b>10:15 – 10:30 am</b></div>
+        <div class="insp"><span>Wed 18 Nov</span><b>5:30 – 5:45 pm</b></div>
+      </div>
+    </article>
+
+    <aside>
+      <div class="agent">
+        <div class="avatar">ST</div>
+        <div><b>Sam Taylor</b><span>Coastline Property (demo)</span></div>
+      </div>
+      <button class="btn">Email agent</button>
+      <button class="btn ghost">Apply</button>
+      <p class="small">Bond $6,200 · Available now</p>
+    </aside>
+  </div>
+</main>
+<footer class="wrap foot">Made-up page for the Microburbs Hackathon. Not a real listing.</footer>
+<script src="boot.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+// Starts Lumo on a listing page, and keeps it pinned while the page changes underneath.
+(() => {
+  if (LUMO.started) return;                 // added twice (manifest + toolbar): run once
+  LUMO.started = true;
+  let url = '', run = 0, data = null, mo = null, heal = 0;
+  const log = (...a) => console.info('[Lumo]', ...a);
+
+  async function start(fromClick) {
+    try { await run1(fromClick); } catch (e) { console.warn('[Lumo] stopped:', e); LUMO.ui.note && LUMO.ui.note('Lumo hit a problem on this page'); }
+  }
+  async function run1(fromClick) {
+    const id = ++run;
+    LUMO.ui.destroy();
+    data = null;
+    const L = LUMO.extract();
+    log('page', LUMO.pageKind() || 'not a listing', L ? { address: L.address, price: L.price, beds: L.beds, lat: L.lat } : '');
+    if (!L || !L.rent) { if (fromClick) LUMO.ui.note('Open a rental listing and Lumo will check it'); return; }
+    LUMO.loadFonts();
+    LUMO.ui.scanning();
+    const [state, kb] = await Promise.all([LUMO.send('state'), LUMO.send('knowledge')]);
+    if (id !== run) return;
+    if (!state || !kb) { log('no answer from the extension; reload it in chrome://extensions'); LUMO.ui.note('Reload Lumo in chrome://extensions'); return; }
+    const claims = LUMO.findClaims(L.regions.text, kb.claims.claims);
+    log(claims.length + ' claims found in the ad:', claims.map((c) => c.text).join(', '));
+    LUMO.paintReading(claims);
+    const { regions, ...plain } = L;
+    const F = (await Promise.race([LUMO.send('facts', { listing: plain }), new Promise((r) => setTimeout(() => r(null), 28000))])) || { sources: [], errors: ['data took too long'] };
+    if (id !== run) return;
+    log('data from', (F.sources || []).map((x) => x.name).join(', ') || 'nothing', F.errors?.length ? { gaps: F.errors } : '');
+    const checks = LUMO.rules(L, F, state.profile, claims);
+    data = { L, F, checks, claims, state, kb, marks: LUMO.buildMarks(checks, L, claims) };
+    log(checks.length + ' checks,', data.marks.text.length + ' words and ' + data.marks.photos.length + ' photos marked');
+    LUMO.ui.render(data);
+    watch();
+  }
+
+  // Sites like Domain re-render parts of the page. If our words disappear, find them again.
+  function watch() {
+    mo && mo.disconnect();
+    mo = new MutationObserver(() => {
+      clearTimeout(heal);
+      heal = setTimeout(() => {
+        if (!data) return;
+        const dead = data.marks.text.some((m) => !LUMO.rangeAlive(m.target)) || data.marks.photos.some((m) => !m.target.isConnected);
+        if (!dead) return;
+        const L = LUMO.extract();
+        if (!L) return;
+        data.L.regions = L.regions;
+        data.claims = LUMO.findClaims(L.regions.text, data.kb.claims.claims);
+        data.marks = LUMO.buildMarks(data.checks, data.L, data.claims);
+        data.rerender = true;
+        LUMO.ui.render(data);
+      }, 350);
+    });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+
+  // Single-page sites change the URL without reloading. Check every second.
+  setInterval(() => { if (location.href.split('#')[0] !== url) { url = location.href.split('#')[0]; setTimeout(start, 700); } }, 1000);
+  url = location.href.split('#')[0];
+  start();
+
+  chrome.runtime.onMessage.addListener((msg, _s, reply) => {
+    if (msg.type === 'toggle') { if (data) LUMO.ui.toggle(); else start(true); reply(true); }
+  });
+})();

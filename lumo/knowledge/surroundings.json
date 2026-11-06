@@ -1,0 +1,1945 @@
+{
+ "about": "Things that could be wrong near a rental. Lumo uses these to know what to look for around an address and which words in an ad to test.",
+ "items": [
+  {
+   "id": 1,
+   "category": "Nightlife and venue noise",
+   "issue": "Pub within 100 m",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 2,
+   "category": "Nightlife and venue noise",
+   "issue": "Bar strip on the street",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 3,
+   "category": "Nightlife and venue noise",
+   "issue": "Nightclub open late",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 4,
+   "category": "Nightlife and venue noise",
+   "issue": "Beer garden facing the flat",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 5,
+   "category": "Nightlife and venue noise",
+   "issue": "Live music venue",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 6,
+   "category": "Nightlife and venue noise",
+   "issue": "Karaoke bar",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 7,
+   "category": "Nightlife and venue noise",
+   "issue": "Late takeaway crowds",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 8,
+   "category": "Nightlife and venue noise",
+   "issue": "Bottle shop out front",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 9,
+   "category": "Nightlife and venue noise",
+   "issue": "24-hour hotel",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 10,
+   "category": "Nightlife and venue noise",
+   "issue": "Function centre",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 11,
+   "category": "Nightlife and venue noise",
+   "issue": "Rooftop bar",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 12,
+   "category": "Nightlife and venue noise",
+   "issue": "Sports bar on game nights",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 13,
+   "category": "Nightlife and venue noise",
+   "issue": "Queues on the footpath",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 14,
+   "category": "Nightlife and venue noise",
+   "issue": "Smokers area under windows",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 15,
+   "category": "Nightlife and venue noise",
+   "issue": "Foot traffic after midnight on weekends",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 16,
+   "category": "Nightlife and venue noise",
+   "issue": "Rideshare pickup point",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 17,
+   "category": "Nightlife and venue noise",
+   "issue": "Early deliveries to venues",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 18,
+   "category": "Nightlife and venue noise",
+   "issue": "Gaming venue",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 19,
+   "category": "Nightlife and venue noise",
+   "issue": "Restaurant kitchen exhaust",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 20,
+   "category": "Nightlife and venue noise",
+   "issue": "Festival or event area",
+   "sources": [
+    "MB",
+    "OSM",
+    "Open"
+   ]
+  },
+  {
+   "id": 21,
+   "category": "Construction",
+   "issue": "Building site next door",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 22,
+   "category": "Construction",
+   "issue": "Approved tower that blocks views",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 23,
+   "category": "Construction",
+   "issue": "Road works",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 24,
+   "category": "Construction",
+   "issue": "Demolition nearby",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 25,
+   "category": "Construction",
+   "issue": "Metro or rail works",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 26,
+   "category": "Construction",
+   "issue": "Long-running site",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 27,
+   "category": "Construction",
+   "issue": "Weekend work permits",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 28,
+   "category": "Construction",
+   "issue": "Cranes overhead",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 29,
+   "category": "Construction",
+   "issue": "Excavation vibration",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 30,
+   "category": "Construction",
+   "issue": "Scaffolding on your own building",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 31,
+   "category": "Construction",
+   "issue": "Cladding repairs",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 32,
+   "category": "Construction",
+   "issue": "Lift replacement",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 33,
+   "category": "Construction",
+   "issue": "Concrete trucks at dawn",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 34,
+   "category": "Construction",
+   "issue": "Footpath closures",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 35,
+   "category": "Construction",
+   "issue": "Light rail works",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 36,
+   "category": "Construction",
+   "issue": "Rezoning for taller buildings",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 37,
+   "category": "Construction",
+   "issue": "Infill lot about to be built",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 38,
+   "category": "Construction",
+   "issue": "Shopping centre redevelopment",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 39,
+   "category": "Construction",
+   "issue": "Sewer works",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 40,
+   "category": "Construction",
+   "issue": "Dust from sites",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 41,
+   "category": "Traffic and transport noise",
+   "issue": "Main road out front",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 42,
+   "category": "Traffic and transport noise",
+   "issue": "Bus stop outside",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 43,
+   "category": "Traffic and transport noise",
+   "issue": "Night bus route",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 44,
+   "category": "Traffic and transport noise",
+   "issue": "Train line nearby",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 45,
+   "category": "Traffic and transport noise",
+   "issue": "Light rail wheel squeal",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 46,
+   "category": "Traffic and transport noise",
+   "issue": "Under a flight path",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 47,
+   "category": "Traffic and transport noise",
+   "issue": "Motorway or tunnel exit",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 48,
+   "category": "Traffic and transport noise",
+   "issue": "Truck route",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 49,
+   "category": "Traffic and transport noise",
+   "issue": "Busy intersection",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 50,
+   "category": "Traffic and transport noise",
+   "issue": "Ambulance route",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 51,
+   "category": "Traffic and transport noise",
+   "issue": "Fire station",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 52,
+   "category": "Traffic and transport noise",
+   "issue": "Police station",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 53,
+   "category": "Traffic and transport noise",
+   "issue": "Motorbike street",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 54,
+   "category": "Traffic and transport noise",
+   "issue": "Rat-run traffic",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 55,
+   "category": "Traffic and transport noise",
+   "issue": "Loading zone",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 56,
+   "category": "Traffic and transport noise",
+   "issue": "Car park entry",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 57,
+   "category": "Traffic and transport noise",
+   "issue": "Helipad",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 58,
+   "category": "Traffic and transport noise",
+   "issue": "Ferry horns",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 59,
+   "category": "Traffic and transport noise",
+   "issue": "Level crossing horns",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 60,
+   "category": "Traffic and transport noise",
+   "issue": "Speed humps",
+   "sources": [
+    "OSM",
+    "TfNSW",
+    "Open"
+   ]
+  },
+  {
+   "id": 61,
+   "category": "Neighbours and building life",
+   "issue": "Short-term rentals in the building",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 62,
+   "category": "Neighbours and building life",
+   "issue": "High tenant turnover",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 63,
+   "category": "Neighbours and building life",
+   "issue": "Crowded share houses",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 64,
+   "category": "Neighbours and building life",
+   "issue": "Student parties",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 65,
+   "category": "Neighbours and building life",
+   "issue": "Thin walls",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 66,
+   "category": "Neighbours and building life",
+   "issue": "Shop below",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 67,
+   "category": "Neighbours and building life",
+   "issue": "Restaurant smells",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 68,
+   "category": "Neighbours and building life",
+   "issue": "Gym in the building",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 69,
+   "category": "Neighbours and building life",
+   "issue": "Childcare nearby",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 70,
+   "category": "Neighbours and building life",
+   "issue": "School playground",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 71,
+   "category": "Neighbours and building life",
+   "issue": "Church bells",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 72,
+   "category": "Neighbours and building life",
+   "issue": "Lift shaft on bedroom wall",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 73,
+   "category": "Neighbours and building life",
+   "issue": "Bins under the window",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 74,
+   "category": "Neighbours and building life",
+   "issue": "Shared laundry next to bedroom",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 75,
+   "category": "Neighbours and building life",
+   "issue": "Strata disputes",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 76,
+   "category": "Neighbours and building life",
+   "issue": "Noise complaints",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 77,
+   "category": "Neighbours and building life",
+   "issue": "Dogs barking",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 78,
+   "category": "Neighbours and building life",
+   "issue": "Rooftop common area above",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 79,
+   "category": "Neighbours and building life",
+   "issue": "Pool or BBQ by the balcony",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 80,
+   "category": "Neighbours and building life",
+   "issue": "Poorly reviewed managing agent",
+   "sources": [
+    "Flats",
+    "Leases",
+    "Ad"
+   ]
+  },
+  {
+   "id": 81,
+   "category": "Safety",
+   "issue": "Street crime",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 82,
+   "category": "Safety",
+   "issue": "Break-ins",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 83,
+   "category": "Safety",
+   "issue": "Car theft",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 84,
+   "category": "Safety",
+   "issue": "Bike theft",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 85,
+   "category": "Safety",
+   "issue": "Poorly lit walk home",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 86,
+   "category": "Safety",
+   "issue": "Laneway shortcut",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 87,
+   "category": "Safety",
+   "issue": "Empty streets after dark",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 88,
+   "category": "Safety",
+   "issue": "Station unsafe at night",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 89,
+   "category": "Safety",
+   "issue": "Parcel theft",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 90,
+   "category": "Safety",
+   "issue": "Antisocial behaviour near venues",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 91,
+   "category": "Safety",
+   "issue": "No secure entry",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 92,
+   "category": "Safety",
+   "issue": "Ground-floor windows on the street",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 93,
+   "category": "Safety",
+   "issue": "No CCTV in the car park",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 94,
+   "category": "Safety",
+   "issue": "Unsecured bike storage",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 95,
+   "category": "Safety",
+   "issue": "Unsafe park",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 96,
+   "category": "Safety",
+   "issue": "Long walk from the bus at night",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 97,
+   "category": "Safety",
+   "issue": "Graffiti",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 98,
+   "category": "Safety",
+   "issue": "Drug activity",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 99,
+   "category": "Safety",
+   "issue": "Unlit footpaths",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 100,
+   "category": "Safety",
+   "issue": "Isolated stretch to the station",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 101,
+   "category": "Environment and health",
+   "issue": "Flood zone",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 102,
+   "category": "Environment and health",
+   "issue": "Flood-prone basement",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 103,
+   "category": "Environment and health",
+   "issue": "Urban heat island",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 104,
+   "category": "Environment and health",
+   "issue": "No shade on the street",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 105,
+   "category": "Environment and health",
+   "issue": "Motorway pollution",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 106,
+   "category": "Environment and health",
+   "issue": "Industrial site nearby",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 107,
+   "category": "Environment and health",
+   "issue": "Waste smells",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 108,
+   "category": "Environment and health",
+   "issue": "Petrol station fumes",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 109,
+   "category": "Environment and health",
+   "issue": "Phone tower on the roof",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 110,
+   "category": "Environment and health",
+   "issue": "Electrical substation",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 111,
+   "category": "Environment and health",
+   "issue": "Contaminated land",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 112,
+   "category": "Environment and health",
+   "issue": "Mould-prone with low sun",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 113,
+   "category": "Environment and health",
+   "issue": "Damp ground floor",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 114,
+   "category": "Environment and health",
+   "issue": "Bushfire overlay",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 115,
+   "category": "Environment and health",
+   "issue": "Storm drain overflow",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 116,
+   "category": "Environment and health",
+   "issue": "Coastal erosion",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 117,
+   "category": "Environment and health",
+   "issue": "Mosquitoes",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 118,
+   "category": "Environment and health",
+   "issue": "Pigeons",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 119,
+   "category": "Environment and health",
+   "issue": "Pollen",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 120,
+   "category": "Environment and health",
+   "issue": "Wood-fire smoke",
+   "sources": [
+    "MB",
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 121,
+   "category": "Light, views and privacy",
+   "issue": "Taller building to the north",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 122,
+   "category": "Light, views and privacy",
+   "issue": "View blocked by an approved tower",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 123,
+   "category": "Light, views and privacy",
+   "issue": "Window faces a brick wall",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 124,
+   "category": "Light, views and privacy",
+   "issue": "Overlooked by neighbours",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 125,
+   "category": "Light, views and privacy",
+   "issue": "Hot west afternoons",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 126,
+   "category": "Light, views and privacy",
+   "issue": "No winter sun",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 127,
+   "category": "Light, views and privacy",
+   "issue": "Neighbour can see the bedroom",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 128,
+   "category": "Light, views and privacy",
+   "issue": "Bright signage",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 129,
+   "category": "Light, views and privacy",
+   "issue": "Streetlight outside the window",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 130,
+   "category": "Light, views and privacy",
+   "issue": "24-hour business lights",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 131,
+   "category": "Light, views and privacy",
+   "issue": "Billboard",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 132,
+   "category": "Light, views and privacy",
+   "issue": "Balcony on a busy street",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 133,
+   "category": "Light, views and privacy",
+   "issue": "Skylight only",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 134,
+   "category": "Light, views and privacy",
+   "issue": "Below street level",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 135,
+   "category": "Light, views and privacy",
+   "issue": "Light well only",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 136,
+   "category": "Light, views and privacy",
+   "issue": "Rail yard view",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 137,
+   "category": "Light, views and privacy",
+   "issue": "Car park view",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 138,
+   "category": "Light, views and privacy",
+   "issue": "Building going up next door",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 139,
+   "category": "Light, views and privacy",
+   "issue": "Glass tower glare",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 140,
+   "category": "Light, views and privacy",
+   "issue": "Sunless courtyard",
+   "sources": [
+    "OSM",
+    "Open",
+    "Flats"
+   ]
+  },
+  {
+   "id": 141,
+   "category": "Daily life gaps",
+   "issue": "No supermarket within walking distance",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 142,
+   "category": "Daily life gaps",
+   "issue": "No late-night food",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 143,
+   "category": "Daily life gaps",
+   "issue": "Pharmacy far",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 144,
+   "category": "Daily life gaps",
+   "issue": "No GP nearby",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 145,
+   "category": "Daily life gaps",
+   "issue": "Hospital far",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 146,
+   "category": "Daily life gaps",
+   "issue": "No laundromat",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 147,
+   "category": "Daily life gaps",
+   "issue": "No park within 5 minutes",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 148,
+   "category": "Daily life gaps",
+   "issue": "No off-leash dog area",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 149,
+   "category": "Daily life gaps",
+   "issue": "Steep hill to the station",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 150,
+   "category": "Daily life gaps",
+   "issue": "Your gym chain is far",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 151,
+   "category": "Daily life gaps",
+   "issue": "No ATM",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 152,
+   "category": "Daily life gaps",
+   "issue": "Post office far",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 153,
+   "category": "Daily life gaps",
+   "issue": "Poor mobile coverage",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 154,
+   "category": "Daily life gaps",
+   "issue": "No NBN fibre",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 155,
+   "category": "Daily life gaps",
+   "issue": "No bike lane",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 156,
+   "category": "Daily life gaps",
+   "issue": "Car share far",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 157,
+   "category": "Daily life gaps",
+   "issue": "No childcare",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 158,
+   "category": "Daily life gaps",
+   "issue": "Unwanted school catchment",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 159,
+   "category": "Daily life gaps",
+   "issue": "Few cafes",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 160,
+   "category": "Daily life gaps",
+   "issue": "Long walk to the bus",
+   "sources": [
+    "OSM",
+    "Open",
+    "MB"
+   ]
+  },
+  {
+   "id": 161,
+   "category": "Transport problems",
+   "issue": "Station further than the ad says",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 162,
+   "category": "Transport problems",
+   "issue": "Packed peak trains",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 163,
+   "category": "Transport problems",
+   "issue": "No night buses",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 164,
+   "category": "Transport problems",
+   "issue": "Weekend trackwork",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 165,
+   "category": "Transport problems",
+   "issue": "Late buses",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 166,
+   "category": "Transport problems",
+   "issue": "Two changes to uni",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 167,
+   "category": "Transport problems",
+   "issue": "One route in and out",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 168,
+   "category": "Transport problems",
+   "issue": "Peak hour jams",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 169,
+   "category": "Transport problems",
+   "issue": "Expensive visitor parking",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 170,
+   "category": "Transport problems",
+   "issue": "Permit-only street parking",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 171,
+   "category": "Transport problems",
+   "issue": "No car space and scarce street parking",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 172,
+   "category": "Transport problems",
+   "issue": "Tolls to work",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 173,
+   "category": "Transport problems",
+   "issue": "Airport far",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 174,
+   "category": "Transport problems",
+   "issue": "Ferry is the only fast option",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 175,
+   "category": "Transport problems",
+   "issue": "Station has no lift",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 176,
+   "category": "Transport problems",
+   "issue": "Busy road to cross",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 177,
+   "category": "Transport problems",
+   "issue": "Bike parking full",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 178,
+   "category": "Transport problems",
+   "issue": "Slow light rail",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 179,
+   "category": "Transport problems",
+   "issue": "Commute worse at your time",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 180,
+   "category": "Transport problems",
+   "issue": "Planned service cuts",
+   "sources": [
+    "TfNSW",
+    "OSM"
+   ]
+  },
+  {
+   "id": 181,
+   "category": "Money and listing red flags",
+   "issue": "Above fair rent",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 182,
+   "category": "Money and listing red flags",
+   "issue": "Relisted often",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 183,
+   "category": "Money and listing red flags",
+   "issue": "Big rent jump since last lease",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 184,
+   "category": "Money and listing red flags",
+   "issue": "Sitting for weeks",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 185,
+   "category": "Money and listing red flags",
+   "issue": "Rent cut several times",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 186,
+   "category": "Money and listing red flags",
+   "issue": "Cheaper identical flat in the same building",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 187,
+   "category": "Money and listing red flags",
+   "issue": "Paying for a car space you don't need",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 188,
+   "category": "Money and listing red flags",
+   "issue": "Rents rising faster than wages",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 189,
+   "category": "Money and listing red flags",
+   "issue": "Ad says quiet but venues are near",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 190,
+   "category": "Money and listing red flags",
+   "issue": "Ad says close to transport but isn't",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 191,
+   "category": "Money and listing red flags",
+   "issue": "Ad says light-filled but it's blocked",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 192,
+   "category": "Money and listing red flags",
+   "issue": "Photos old or mismatched",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 193,
+   "category": "Money and listing red flags",
+   "issue": "Details not confirmed",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 194,
+   "category": "Money and listing red flags",
+   "issue": "Ghost listing",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 195,
+   "category": "Money and listing red flags",
+   "issue": "Strata issues",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 196,
+   "category": "Money and listing red flags",
+   "issue": "Investor-heavy building",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 197,
+   "category": "Money and listing red flags",
+   "issue": "Short lease only",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 198,
+   "category": "Money and listing red flags",
+   "issue": "High bills from old appliances",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 199,
+   "category": "Money and listing red flags",
+   "issue": "Hidden fees",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  },
+  {
+   "id": 200,
+   "category": "Money and listing red flags",
+   "issue": "Price not listed",
+   "sources": [
+    "Leases",
+    "Flats",
+    "MB",
+    "Ad"
+   ]
+  }
+ ]
+}

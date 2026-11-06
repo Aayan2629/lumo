@@ -1,0 +1,8 @@
+/* Lumo text marks. Painted by the browser inside the page's own text, so they stay on the words
+   when you scroll: they are part of the text, not a layer on top.
+   Only colour, background and underline are allowed in ::highlight, so the glow lives in Lumo's layer. */
+::highlight(lumo-red)   { background-color: rgba(255, 45, 35, 0.2);   text-decoration: underline 2.5px rgb(255, 45, 35); }
+::highlight(lumo-amber) { background-color: rgba(255, 196, 0, 0.3);   text-decoration: underline 2.5px rgb(245, 166, 0); }
+::highlight(lumo-green) { background-color: rgba(40, 205, 90, 0.2);   text-decoration: underline 2.5px rgb(30, 180, 75); }
+::highlight(lumo-focus) { background-color: rgba(255, 214, 120, 0.4); }
+::highlight(lumo-reading) { background-color: rgba(201, 164, 92, 0.2); }

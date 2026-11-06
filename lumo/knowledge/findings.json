@@ -1,0 +1,1236 @@
+{
+ "about": "Checks Lumo can run on a listing, ranked by how much renters want them and whether the hackathon data can prove them. Ideas: verify each against real data before claiming it.",
+ "sourceKey": {
+  "MB": "Microburbs API",
+  "Leases": "Past-leases file (hackathon)",
+  "Flats": "Flats file (hackathon)",
+  "Census": "Blocks file: 2021 Census and 2026 estimates",
+  "Open": "City of Sydney or NSW open data",
+  "OSM": "OpenStreetMap",
+  "TfNSW": "Transport for NSW data",
+  "Ad": "The listing text itself",
+  "Reviews": "Public reviews",
+  "Strata": "Strata records"
+ },
+ "findings": [
+  {
+   "id": 1,
+   "rank": 1,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Rent and price",
+   "title": "Fair rent vs asking rent",
+   "check": "Your own model's price for this flat, with and without parking, against what the ad asks.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 11,
+   "rank": 2,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Parking",
+   "title": "What a car space is worth here",
+   "check": "Model's with-parking minus without-parking price for this flat.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 42,
+   "rank": 3,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Transport",
+   "title": "Your commute, at your time",
+   "check": "Monday 8 am to your uni or work, not leave now.",
+   "sources": [
+    "OSM",
+    "TfNSW"
+   ]
+  },
+  {
+   "id": 91,
+   "rank": 4,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Daily life",
+   "title": "Real weekly cost",
+   "check": "Rent plus transport plus parking plus likely bills.",
+   "sources": [
+    "Leases",
+    "MB"
+   ]
+  },
+  {
+   "id": 36,
+   "rank": 5,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Turnover and history",
+   "title": "Last rent paid",
+   "check": "What this exact flat rented for last time, adjusted for time.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 31,
+   "rank": 6,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Turnover and history",
+   "title": "Relisted often",
+   "check": "This flat was advertised many times recently; tenants don't stay.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 41,
+   "rank": 7,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Transport",
+   "title": "Close to transport check",
+   "check": "Real walk time to the nearest station, not straight-line distance.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 51,
+   "rank": 8,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Noise",
+   "title": "Quiet street check",
+   "check": "Pubs, bars and late venues within 150 m.",
+   "sources": [
+    "MB",
+    "OSM"
+   ]
+  },
+  {
+   "id": 3,
+   "rank": 9,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Rent and price",
+   "title": "Same building, cheaper flat",
+   "check": "Similar flats in this exact building that rented for less in the last year.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 2,
+   "rank": 10,
+   "tier": 1,
+   "tierName": "Build first",
+   "category": "Rent and price",
+   "title": "Rare value check",
+   "check": "Flags ads that say great value or priced to lease but sit above fair rent.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 33,
+   "rank": 11,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Turnover and history",
+   "title": "Days on market",
+   "check": "How long similar flats took to lease; room to negotiate.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 4,
+   "rank": 12,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Rent and price",
+   "title": "Price-drop history",
+   "check": "How many times this flat's asking rent was cut before it leased.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 37,
+   "rank": 13,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Turnover and history",
+   "title": "Rent jump at relisting",
+   "check": "How much rent rose between the last two leases of this flat.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 73,
+   "rank": 14,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Risk",
+   "title": "Crime on this street",
+   "check": "Street-level incidents, not just the suburb.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 71,
+   "rank": 15,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Risk",
+   "title": "Flood risk",
+   "check": "Flood overlay on the property.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 14,
+   "rank": 16,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Parking",
+   "title": "Parking unknown",
+   "check": "The ad doesn't say; show the price both ways.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 13,
+   "rank": 17,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Parking",
+   "title": "Paying for parking you won't use",
+   "check": "Someone with no car looking at a flat whose rent includes a space.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 20,
+   "rank": 18,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Parking",
+   "title": "Car-free saving",
+   "check": "Weekly saving from the no-parking version plus an Opal card.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 21,
+   "rank": 19,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Building and floor",
+   "title": "What each floor adds",
+   "check": "Extra weekly rent per floor up in the same building.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 9,
+   "rank": 20,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Rent and price",
+   "title": "Rent growth vs wages",
+   "check": "How fast this suburb's rent has risen compared with local incomes.",
+   "sources": [
+    "MB",
+    "Census"
+   ]
+  },
+  {
+   "id": 83,
+   "rank": 21,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Neighbourhood change",
+   "title": "Rising or cooling",
+   "check": "Rent trend over three years for this pocket.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 5,
+   "rank": 22,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Rent and price",
+   "title": "Overpriced and sitting",
+   "check": "Flats asking over fair rent that have been listed longer than the suburb average.",
+   "sources": [
+    "MB",
+    "Leases"
+   ]
+  },
+  {
+   "id": 55,
+   "rank": 23,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Noise",
+   "title": "Construction next door",
+   "check": "Approved developments within 200 m.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 61,
+   "rank": 24,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Light and views",
+   "title": "Which way it faces",
+   "check": "North vs south-facing in the same building.",
+   "sources": [
+    "Flats",
+    "OSM"
+   ]
+  },
+  {
+   "id": 62,
+   "rank": 25,
+   "tier": 2,
+   "tierName": "Strong addition",
+   "category": "Light and views",
+   "title": "Light-filled check",
+   "check": "Taller buildings to the north that block the sun.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 92,
+   "rank": 26,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Daily life",
+   "title": "Your gym, nearest branch",
+   "check": "Walk time to the chain you picked.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 93,
+   "rank": 27,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Daily life",
+   "title": "Your supermarket",
+   "check": "Nearest branch of the one you shop at.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 54,
+   "rank": 28,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Noise",
+   "title": "Main road frontage",
+   "check": "Facing a major road vs a side street.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 44,
+   "rank": 29,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Transport",
+   "title": "Night bus gap",
+   "check": "Whether you can get home after 1 am without a car.",
+   "sources": [
+    "TfNSW"
+   ]
+  },
+  {
+   "id": 32,
+   "rank": 30,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Turnover and history",
+   "title": "Building turnover",
+   "check": "Share of the building's flats relisted each year vs the suburb.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 6,
+   "rank": 31,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Rent and price",
+   "title": "Rent per bedroom",
+   "check": "Whether a 3-bed is actually cheaper per room than two 1-beds nearby.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 53,
+   "rank": 32,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Noise",
+   "title": "Flight path",
+   "check": "Under a Sydney Airport flight path.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 52,
+   "rank": 33,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Noise",
+   "title": "Weekend noise",
+   "check": "Pedestrian counts on Friday and Saturday nights.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 78,
+   "rank": 34,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Risk",
+   "title": "Foot traffic at night",
+   "check": "Busy streets feel safer after dark.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 77,
+   "rank": 35,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Risk",
+   "title": "Lighting at night",
+   "check": "Street lighting on the walk home.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 100,
+   "rank": 36,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Daily life",
+   "title": "Livability score for you",
+   "check": "Suburb livability reweighted by what matters to you.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 12,
+   "rank": 37,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Parking",
+   "title": "Parking premium by suburb",
+   "check": "Car spaces are worth far more in some suburbs than next to a station.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 22,
+   "rank": 38,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Building and floor",
+   "title": "Ground-floor discount",
+   "check": "How much less ground-floor flats rent for.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 10,
+   "rank": 39,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Rent and price",
+   "title": "Studio trap",
+   "check": "Flats typed as studio but listed with a bedroom count, priced like a 1-bed.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 8,
+   "rank": 40,
+   "tier": 3,
+   "tierName": "Personal fit",
+   "category": "Rent and price",
+   "title": "Seasonal timing",
+   "check": "Whether rents in this suburb are cheaper to sign in winter than in January.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 48,
+   "rank": 41,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Transport",
+   "title": "Rent saved per minute",
+   "check": "How much less you pay for each extra minute of commute.",
+   "sources": [
+    "Leases",
+    "OSM"
+   ]
+  },
+  {
+   "id": 30,
+   "rank": 42,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Building and floor",
+   "title": "Strata red flags",
+   "check": "Buildings with many development applications for repairs.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 76,
+   "rank": 43,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Risk",
+   "title": "Building defects",
+   "check": "Buildings named in public defect orders.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 26,
+   "rank": 44,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Building and floor",
+   "title": "Investor-heavy buildings",
+   "check": "Share of flats in the building ever advertised for lease.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 27,
+   "rank": 45,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Building and floor",
+   "title": "Owner-occupier buildings",
+   "check": "Fewer rentals often means better upkeep.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 68,
+   "rank": 46,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Light and views",
+   "title": "Heat in summer",
+   "check": "West-facing top floors get hottest.",
+   "sources": [
+    "Flats",
+    "OSM"
+   ]
+  },
+  {
+   "id": 65,
+   "rank": 47,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Light and views",
+   "title": "Winter sun",
+   "check": "Hours of direct sun in June.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 96,
+   "rank": 48,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Daily life",
+   "title": "Pet friendliness",
+   "check": "Off-leash dog areas nearby.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 98,
+   "rank": 49,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Daily life",
+   "title": "Schools for families",
+   "check": "Catchment schools for the address.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 95,
+   "rank": 50,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Daily life",
+   "title": "Parks you'll use",
+   "check": "Green space within 5 minutes.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 34,
+   "rank": 51,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Turnover and history",
+   "title": "Ghost listing",
+   "check": "Ads that keep coming back unchanged for months.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 38,
+   "rank": 52,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Turnover and history",
+   "title": "Off-market listings",
+   "check": "Only on the agency's site, fewer competitors.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 35,
+   "rank": 53,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Turnover and history",
+   "title": "First time on the market",
+   "check": "Never advertised before, often newly bought by an investor.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 40,
+   "rank": 54,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Turnover and history",
+   "title": "Attributes not confirmed",
+   "check": "The flat's details haven't been confirmed in years.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 63,
+   "rank": 55,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Light and views",
+   "title": "Views at risk",
+   "check": "Approved towers that will block the view.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 79,
+   "rank": 56,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Risk",
+   "title": "Flood-prone basement parking",
+   "check": "Car spaces in flood zones.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 43,
+   "rank": 57,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Transport",
+   "title": "Hill penalty",
+   "check": "Walks that look short but climb steeply.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 45,
+   "rank": 58,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Transport",
+   "title": "Light rail vs train",
+   "check": "Which line actually gets you there faster.",
+   "sources": [
+    "TfNSW"
+   ]
+  },
+  {
+   "id": 47,
+   "rank": 59,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Transport",
+   "title": "Bike lanes",
+   "check": "Separated cycleways to your uni.",
+   "sources": [
+    "Open",
+    "OSM"
+   ]
+  },
+  {
+   "id": 59,
+   "rank": 60,
+   "tier": 4,
+   "tierName": "Useful extra",
+   "category": "Noise",
+   "title": "Licensed venue hours",
+   "check": "Late trading licences nearby.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 56,
+   "rank": 61,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Noise",
+   "title": "Bus route outside",
+   "check": "Buses per hour on the street.",
+   "sources": [
+    "TfNSW"
+   ]
+  },
+  {
+   "id": 84,
+   "rank": 62,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Neighbourhood change",
+   "title": "Who lives here",
+   "check": "Age mix: students vs families.",
+   "sources": [
+    "Census"
+   ]
+  },
+  {
+   "id": 85,
+   "rank": 63,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Neighbourhood change",
+   "title": "Renters vs owners",
+   "check": "Share of renters on the block.",
+   "sources": [
+    "Census"
+   ]
+  },
+  {
+   "id": 82,
+   "rank": 64,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Neighbourhood change",
+   "title": "New station coming",
+   "check": "Future Metro stations that could lift rent.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 81,
+   "rank": 65,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Neighbourhood change",
+   "title": "What's being built nearby",
+   "check": "Development applications within 500 m.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 72,
+   "rank": 66,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Risk",
+   "title": "Heat island",
+   "check": "Block surface temperature vs the suburb.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 80,
+   "rank": 67,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Risk",
+   "title": "Insurance hint",
+   "check": "Contents insurance likely to cost more.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 7,
+   "rank": 68,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Rent and price",
+   "title": "Rent per square metre",
+   "check": "Where floor area is known.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 23,
+   "rank": 69,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Building and floor",
+   "title": "Top-floor premium",
+   "check": "Whether the top floors break the trend.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 25,
+   "rank": 70,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Building and floor",
+   "title": "Building age",
+   "check": "Rent difference between new builds and older blocks of the same size.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 29,
+   "rank": 71,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Building and floor",
+   "title": "Same layout, different price",
+   "check": "Identical flats on similar floors renting far apart.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 60,
+   "rank": 72,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Noise",
+   "title": "Quiet-side flats",
+   "check": "Whether back-of-building flats rent for more.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 66,
+   "rank": 73,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Light and views",
+   "title": "Harbour glimpse premium",
+   "check": "What water views add to rent.",
+   "sources": [
+    "Leases",
+    "OSM"
+   ]
+  },
+  {
+   "id": 69,
+   "rank": 74,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Light and views",
+   "title": "Floor vs view",
+   "check": "The floor where the view opens up and rent jumps.",
+   "sources": [
+    "Leases",
+    "Flats"
+   ]
+  },
+  {
+   "id": 16,
+   "rank": 75,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Parking",
+   "title": "Street parking pressure",
+   "check": "Homes per kerb space in the block.",
+   "sources": [
+    "Census",
+    "OSM"
+   ]
+  },
+  {
+   "id": 17,
+   "rank": 76,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Parking",
+   "title": "Parking vs transport",
+   "check": "Parking premium falls the closer you are to a station.",
+   "sources": [
+    "Leases",
+    "OSM"
+   ]
+  },
+  {
+   "id": 15,
+   "rank": 77,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Parking",
+   "title": "Second car space value",
+   "check": "Whether a second space adds anything at all.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 18,
+   "rank": 78,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Parking",
+   "title": "Garage or car space",
+   "check": "Whether lock-up garages rent higher than open spaces.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 19,
+   "rank": 79,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Parking",
+   "title": "Visitor parking myth",
+   "check": "Buildings advertising visitor parking in permit-only streets.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 58,
+   "rank": 80,
+   "tier": 5,
+   "tierName": "Niche or later",
+   "category": "Noise",
+   "title": "Event venues",
+   "check": "Stadiums and concert halls nearby.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 94,
+   "rank": 81,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Daily life",
+   "title": "Late-night food",
+   "check": "Open after 10 pm within walking distance.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 97,
+   "rank": 82,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Daily life",
+   "title": "Laundry",
+   "check": "Laundromats for flats without one.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 99,
+   "rank": 83,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Daily life",
+   "title": "Mobile coverage",
+   "check": "Known black spots in basements and towers.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 49,
+   "rank": 84,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Transport",
+   "title": "Car share nearby",
+   "check": "Car-share bays within 300 m.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 39,
+   "rank": 85,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Turnover and history",
+   "title": "Agent turnover",
+   "check": "Buildings where the managing agency changes often.",
+   "sources": [
+    "Leases"
+   ]
+  },
+  {
+   "id": 86,
+   "rank": 86,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Neighbourhood change",
+   "title": "People per home",
+   "check": "Crowded blocks may mean share houses.",
+   "sources": [
+    "Census"
+   ]
+  },
+  {
+   "id": 87,
+   "rank": 87,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Neighbourhood change",
+   "title": "Moving in, moving out",
+   "check": "Population change since 2021.",
+   "sources": [
+    "Census"
+   ]
+  },
+  {
+   "id": 90,
+   "rank": 88,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Neighbourhood change",
+   "title": "Zoning change",
+   "check": "Rezoning that allows taller buildings.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 75,
+   "rank": 89,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Risk",
+   "title": "Heritage limits",
+   "check": "Heritage areas that block changes.",
+   "sources": [
+    "MB",
+    "Open"
+   ]
+  },
+  {
+   "id": 74,
+   "rank": 90,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Risk",
+   "title": "Bushfire overlay",
+   "check": "Mostly outside the city.",
+   "sources": [
+    "MB"
+   ]
+  },
+  {
+   "id": 64,
+   "rank": 91,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Light and views",
+   "title": "Tree cover",
+   "check": "Street trees outside.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 67,
+   "rank": 92,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Light and views",
+   "title": "Park outlook",
+   "check": "Facing a park vs a wall.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 70,
+   "rank": 93,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Light and views",
+   "title": "Overlooked",
+   "check": "Distance to the facing building's windows.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 24,
+   "rank": 94,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Building and floor",
+   "title": "Building size effect",
+   "check": "Big towers vs small walk-ups.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 28,
+   "rank": 95,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Building and floor",
+   "title": "Corner flats",
+   "check": "Whether corner positions rent higher.",
+   "sources": [
+    "Flats"
+   ]
+  },
+  {
+   "id": 88,
+   "rank": 96,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Neighbourhood change",
+   "title": "Shops closing",
+   "check": "Venues on the main street that shut recently.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 89,
+   "rank": 97,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Neighbourhood change",
+   "title": "New cafés opening",
+   "check": "A sign the area is getting busier.",
+   "sources": [
+    "OSM"
+   ]
+  },
+  {
+   "id": 46,
+   "rank": 98,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Transport",
+   "title": "Station crowding",
+   "check": "Pedestrian counts near the station at peak.",
+   "sources": [
+    "Open"
+   ]
+  },
+  {
+   "id": 50,
+   "rank": 99,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Transport",
+   "title": "Airport access",
+   "check": "Time to the airport.",
+   "sources": [
+    "TfNSW"
+   ]
+  },
+  {
+   "id": 57,
+   "rank": 100,
+   "tier": 6,
+   "tierName": "Lowest priority",
+   "category": "Noise",
+   "title": "Rubbish truck time",
+   "check": "Early commercial collections on mixed-use streets.",
+   "sources": [
+    "Open"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,96 @@
+{
+  "about": "Every data source Lumo uses or can use, what it proves, and how Lumo reaches it. Status: live = called from the browser when a listing opens; bundled = a saved copy inside Lumo; key = needs a free key in Settings; planned = not wired in yet.",
+  "sources": [
+    {
+      "name": "Microburbs API",
+      "status": "live",
+      "access": "api.microburbs.com.au, key in Settings (free 'test' key covers Bondi and a few other suburbs)",
+      "powers": ["fair rent from similar listings", "car space value", "late venues", "crime vs national", "flood", "days on market", "rent history and relisting (with a full key)"],
+      "findings": [1, 2, 11, 13, 31, 33, 36, 37, 51, 71, 73]
+    },
+    {
+      "name": "NSW Planning Portal: online DA data (since 2019)",
+      "status": "live",
+      "access": "api.apps1.nsw.gov.au/eplanning/data/v0/OnlineDA, no key. Filtered by council and lodgement date, then by distance. Waverley is also bundled (data/da-waverley.json) for a fast demo.",
+      "powers": ["building work within 300 m", "views at risk", "construction noise", "demolition and rebuilds"],
+      "findings": [55, 63, 81, 90]
+    },
+    {
+      "name": "NSW Spatial Services (NSW Government)",
+      "status": "live",
+      "access": "portal.spatial.nsw.gov.au ArcGIS REST, no key. Train, metro and light rail stations (Features of Interest), and council boundaries.",
+      "powers": ["nearest station", "night walk start point", "which council (for DA data)"],
+      "findings": [41, 44, 77]
+    },
+    {
+      "name": "ABS Census 2021",
+      "status": "live",
+      "access": "data.api.abs.gov.au (SDMX), no key. Table G02 by postcode.",
+      "powers": ["median rent 2021", "household and personal income", "people per bedroom", "rent as a share of local income"],
+      "findings": [9, 84, 86]
+    },
+    {
+      "name": "City of Sydney open data",
+      "status": "live",
+      "access": "services1.arcgis.com City of Sydney FeatureServers, no key. Only inside the City of Sydney council area.",
+      "powers": ["council street lights on the night walk", "street trees within 100 m", "late-night trading streets"],
+      "findings": [59, 64, 77]
+    },
+    {
+      "name": "OpenStreetMap",
+      "status": "live + bundled",
+      "access": "Overpass API (several mirrors, raced) and OSRM foot routing (routing.openstreetmap.de). Bondi Junction to Bondi Beach is bundled (data/osm-east.json) for when Overpass is down.",
+      "powers": ["walking routes", "street lights and lit streets", "pubs and bars", "stations", "gyms and supermarkets by brand"],
+      "findings": [41, 51, 77, 92, 93]
+    },
+    {
+      "name": "Overture Maps places",
+      "status": "bundled",
+      "access": "Release 2026-10-21, Greater Sydney, saved in data/places-sydney.json (6,244 places: gyms, supermarkets, pubs and bars, stations).",
+      "powers": ["your gym and supermarket brands", "late venues", "stations, when live sources fail"],
+      "findings": [51, 92, 93]
+    },
+    {
+      "name": "Mapillary",
+      "status": "key",
+      "access": "graph.mapillary.com, free client token from mapillary.com/developer, paste in Settings.",
+      "powers": ["recent street-level photos around the home"],
+      "findings": [70]
+    },
+    {
+      "name": "Google Maps",
+      "status": "key + links",
+      "access": "Links work with no key (directions, Street View). Routes API key in Settings gives real transit times.",
+      "powers": ["commute to your places", "Street View"],
+      "findings": [42]
+    },
+    {
+      "name": "NSW Valuer General bulk sales",
+      "status": "planned",
+      "access": "Weekly bulk sales files from valuergeneral.nsw.gov.au (blocked from our build server; download by hand and convert).",
+      "powers": ["last sale price of the building", "investor-heavy buildings (frequent sales)"],
+      "findings": [26, 27]
+    },
+    {
+      "name": "Digital Atlas of Australia",
+      "status": "planned",
+      "access": "digital.atlas.gov.au national ArcGIS layers.",
+      "powers": ["national hazard layers (flood, bushfire) outside Microburbs coverage"],
+      "findings": [71, 74]
+    },
+    {
+      "name": "Digital Earth Australia",
+      "status": "planned",
+      "access": "ows.dea.ga.gov.au (satellite layers).",
+      "powers": ["tree cover and heat from satellite", "flood history"],
+      "findings": [64, 72]
+    },
+    {
+      "name": "data.gov.au",
+      "status": "catalogue",
+      "access": "data.gov.au CKAN catalogue: where to find council datasets (street lights, parking, noise) for other councils.",
+      "powers": ["finding more council layers to add"],
+      "findings": []
+    }
+  ]
+}
