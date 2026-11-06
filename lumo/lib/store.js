@@ -31,7 +31,7 @@ export const DEFAULT_PROFILE = {
 };
 
 export async function getAll() {
-  const r = await chrome.storage.local.get(['settings', 'profile', 'saved']);
+  const r = await chrome.storage.local.get(['settings', 'profile', 'saved', 'notes']);
   const stored = { ...(r.settings || {}) };
   if (OLD.some((k) => k in stored)) {
     for (const k of OLD) delete stored[k];
@@ -40,8 +40,16 @@ export async function getAll() {
   return {
     settings: { ...DEFAULT_SETTINGS, ...stored, shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...(stored.shortcuts || {}) } },
     profile: { ...DEFAULT_PROFILE, ...(r.profile || {}) },
-    saved: r.saved || []
+    saved: r.saved || [],
+    notes: r.notes || {}
   };
+}
+
+// Notes are kept per home, keyed by the listing's address on the web: no query, no hash, no trailing slash.
+// Same logic as LUMO.noteKey in content/core.js.
+export function noteKey(url) {
+  try { const u = new URL(url); return (u.protocol + '//' + u.host + u.pathname).replace(/\/+$/, ''); }
+  catch { return String(url || '').split(/[?#]/)[0].replace(/\/+$/, ''); }
 }
 
 // Cache API answers so the same listing never costs twice (Microburbs charges per call).

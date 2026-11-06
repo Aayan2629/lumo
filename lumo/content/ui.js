@@ -16,7 +16,10 @@
   let hover = null, raf = 0;
   let view = 'checks', detail = null, open = false, showGrey = false, marksOn = true;
   let chat = [], busy = false;
-  let gen = 0;                  // bumped by destroy(), so an answer for an old page is dropped
+  // Notes: the home whose notes screen is open (its note key), where Back goes, and the entry being edited.
+  let noteHome = null, noteBack = null, noteEdit = null, noteFocus = false, drawnNote = null, pendingScroll = null;
+  let toastMsg = null, toastTimer = 0;
+  let gen = 0;                 // bumped by destroy(), so an answer for an old page is dropped
   let dataReady = null, dataResolve = null;   // a question asked while Lumo is still reading waits on this
   let pos = {};                 // remembered dock and panel positions
   const edges = new Map();      // photo mark -> element
@@ -81,8 +84,8 @@
     placeDock();
     setTimeout(() => { if (dock && !D) destroy(); }, 4000);
   }
-  // While the mic is on, Esc stops it (content/voice.js) and must not close the panel.
-  const onKey = (e) => { if (e.key === 'Escape' && open && !LUMO.voice?.listening) toggle(false); };
+  // While the mic is on, Esc stops it (content/voice.js) and must not close the panel. Same while a note is being edited.
+  const onKey = (e) => { if (e.key === 'Escape' && open && !LUMO.voice?.listening && !noteEdit) toggle(false); };
   const onResize = () => { placeDock(); if (open) placePanel(); schedule(); };
 
   function destroy() {
@@ -92,6 +95,7 @@
     removeEventListener('scroll', schedule, true); removeEventListener('resize', onResize); removeEventListener('keydown', onKey);
     LUMO.voice?.reset();
     LUMO.unpaint(); host.remove(); host = null; edges.clear(); D = null; open = false; chat = []; busy = false; gen++; detail = null; view = 'checks'; chip = null;
+    noteHome = noteBack = noteEdit = drawnNote = pendingScroll = toastMsg = null; noteFocus = false; clearTimeout(toastTimer);
   }
 
   // Is the page itself dark? Look at the first solid background from body upwards.
@@ -369,7 +373,7 @@
     dock.classList.toggle('hide', open);
     hover = null; showHover(null);
   }
-  function openDetail(id) { detail = id; view = 'checks'; if (!open) toggle(true); else renderPanel(); }
+  function openDetail(id) { leaveNotes(); detail = id; view = 'checks'; if (!open) toggle(true); else renderPanel(); }
   function setMarks(on) {
     marksOn = on;
     if (on) LUMO.paint(D.marks); else LUMO.unpaint();
@@ -425,12 +429,22 @@
   }
   function sideGrips() {}
 
-  // Re-rendering rebuilds the chat box: keep what was typed (or dictated) in it.
+  // Re-rendering rebuilds the chat box (or the note box): keep what was typed (or dictated) in it,
+  // and the text of a note being edited.
+  const composerKind = (f) => (f.classList.contains('notec') ? 'note:' + drawnNote : 'chat');
   function renderPanel() {
-    const draft = panel.querySelector('.composer input')?.value || '';
+    const f0 = panel.querySelector('.composer'), i0 = f0?.querySelector('input, textarea');
+    const draft = i0 ? { kind: composerKind(f0), v: i0.value, focus: root.activeElement === i0 } : null;
+    const e0 = panel.querySelector('.nedit textarea');
+    const edit = e0 ? { id: e0.closest('[data-id]')?.dataset.id, v: e0.value } : null;
     draw();
-    const inp = panel.querySelector('.composer input');
-    if (inp && draft) { inp.value = draft; panel.querySelector('.composer .send').disabled = !draft.trim(); }
+    const f = panel.querySelector('.composer'), inp = f?.querySelector('input, textarea');
+    if (inp && draft && draft.kind === composerKind(f)) {
+      if (draft.v) { inp.value = draft.v; f.querySelector('.send').disabled = !draft.v.trim(); inp._grow?.(); }
+      if (draft.focus) inp.focus({ preventScroll: true });
+    }
+    const ed = panel.querySelector('.nedit textarea');
+    if (ed && edit && edit.id === noteEdit) { ed.value = edit.v; ed._grow?.(); }
     LUMO.voice?.paint();
   }
   function draw() {
@@ -451,34 +465,49 @@
     }
     const { L, checks, state } = D;
     const inv = D.mode === 'invest';
-    const TABS = inv ? [['checks', 'Checks'], ['numbers', 'Numbers'], ['ask', 'Ask'], ['saved', 'Saved']] : [['checks', 'Checks'], ['ask', 'Ask Lumo'], ['saved', 'Saved']];
+    const TABS = inv
+      ? [['checks', 'Checks'], ['numbers', 'Numbers'], ['ask', 'Ask'], ['saved', 'Saved'], ['notes', 'Notes']]
+      : [['checks', 'Checks'], ['ask', 'Ask Lumo'], ['saved', 'Saved'], ['notes', 'Notes']];
     if (!TABS.some(([k]) => k === view)) view = 'checks';
     const saved = (state.saved || []).some((s) => s.url === L.url);
     const parts = (L.address || '').split(',');
-    const nSaved = (state.saved || []).length;
+    const nSaved = (state.saved || []).length, nNotes = Object.keys(state.notes || {}).length;
+    const nHere = state.notes?.[LUMO.noteKey(L.url)]?.entries.length || 0;
     const scroll = panel.querySelector('.body')?.scrollTop || 0;
+    const fromLabel = (TABS.find(([k]) => k === view) || [])[1] || 'Back';
+    const badge = (k) => (k === 'saved' && nSaved ? `<span class="n">${nSaved}</span>` : k === 'notes' && nNotes ? `<span class="n">${nNotes}</span>` : '');
+    const bodyHtml = noteHome ? homeNotesView(noteHome, view === 'checks' && detail ? 'Back' : fromLabel)
+      : view === 'checks' ? (detail ? detailView(byId(detail)) : list(checks)) : view === 'numbers' ? numbersView() : view === 'ask' ? askView() : view === 'notes' ? notesView() : savedView();
     panel.innerHTML = `
       <header class="top" title="Drag to move">
         <span class="grip"></span>
         ${LUMO.logo(32)}
         <div class="addr"><b>${E(parts[0] || 'This home')}</b><span>${inv ? '<em class="badge">Investor</em>' : ''}${E(parts.slice(1).join(',').trim() || [L.beds && L.beds + ' bed', L.type].filter(Boolean).join(' · '))}</span></div>
         <button class="round heart ${saved ? 'on' : ''}" aria-label="${saved ? 'Saved' : 'Save this home'}" aria-pressed="${saved}">${I('heart', 16)}</button>
+        <button class="round pencil" aria-label="Notes for this home${nHere ? ` (${nHere})` : ''}" title="Notes">${I('pencil', 15)}${nHere ? `<span class="dotn">${nHere}</span>` : ''}</button>
         <button class="round eye ${marksOn ? '' : 'dim'}" aria-label="${marksOn ? 'Hide marks on the page' : 'Show marks on the page'}" aria-pressed="${marksOn}">${I(marksOn ? 'eye' : 'eyeoff', 16)}</button>
         <button class="round side" aria-label="${pos.side ? 'Back to a floating window' : 'Open as a side page'}" title="${pos.side ? 'Float' : 'Side page'}">${I(pos.side ? 'shrink' : 'expand', 15)}</button>
         <button class="round fold" aria-label="Minimise">${I('fold', 16)}</button>
       </header>
       ${inv ? investHero() : hero()}
-      <div class="seg" role="tablist" style="--n:${TABS.length}">
+      <div class="seg${TABS.length > 4 ? ' n5' : ''}" role="tablist" style="--n:${TABS.length}">
         <span class="thumb" style="transform:translateX(${TABS.findIndex(([k]) => k === view) * 100}%)"></span>
-        ${TABS.map(([k, label]) => `<button role="tab" data-v="${k}" aria-selected="${view === k}">${label}${k === 'saved' && nSaved ? `<span class="n">${nSaved}</span>` : ''}</button>`).join('')}
+        ${TABS.map(([k, label]) => `<button role="tab" data-v="${k}" aria-selected="${view === k}">${label}${badge(k)}</button>`).join('')}
       </div>
-      <div class="body">${view === 'checks' ? (detail ? detailView(byId(detail)) : list(checks)) : view === 'numbers' ? numbersView() : view === 'ask' ? askView() : savedView()}</div>
-      ${view === 'ask' ? composer() : foot()}`;
+      <div class="body">${bodyHtml}</div>
+      ${noteHome ? noteComposer() : view === 'ask' ? composer() : foot()}`;
     wirePanel();
-    if (view === 'numbers') wireNumbers();
+    if (noteHome) wireNotes();
+    else if (view === 'numbers') wireNumbers();
     wireMaps(panel);
     addGrips(); sideGrips();
-    if (view === 'ask') renderChat(); else if (!detail) panel.querySelector('.body').scrollTop = scroll;
+    const body = panel.querySelector('.body');
+    if (noteHome) body.scrollTop = noteHome === drawnNote ? scroll : 0;
+    else if (view === 'ask') { pendingScroll = null; renderChat(); }
+    else if (pendingScroll != null) { body.scrollTop = pendingScroll; pendingScroll = null; }
+    else if (!detail) body.scrollTop = scroll;
+    drawnNote = noteHome;
+    showToast();
   }
 
   function hero() {
@@ -886,7 +915,74 @@
       <a href="${E(h.url)}">${h.photo ? `<img src="${E(h.photo)}" alt="">` : '<span class="ph"></span>'}
       <div class="meta"><div class="price num">${h.price ? (h.sale ? LUMO.short(h.price) : M(h.price) + ' /wk') : 'Price hidden'}${h.sale ? '<em class="badge">Buy</em>' : ''}</div><div class="ad">${E((h.address || '').split(',')[0])}</div>
       <div class="cs">${['red', 'amber', 'green'].filter((k) => h.counts?.[k]).map((k) => `<span class="count ${k}"><i class="dot"></i>${h.counts[k]}</span>`).join('')}</div></div></a>
+      ${notePill(h.url)}
       <button class="rm" data-unsave="${E(h.url)}" aria-label="Remove">${I('x', 13)}</button></div>`).join('')}</div>`;
+  }
+  // On a Saved tile: "3 notes" when the home has notes, a quiet "Add note" on hover when it hasn't.
+  function notePill(url) {
+    const key = LUMO.noteKey(url), n = D.state.notes?.[key]?.entries.length || 0;
+    return `<button class="npill ${n ? 'has' : ''}" data-notes="${E(key)}"${n ? '' : ' data-focus'}>${I('pencil', 12)}${n ? nNotes(n) : 'Add note'}</button>`;
+  }
+
+  // ---------- notes ----------
+  const nNotes = (n) => `${n} note${n === 1 ? '' : 's'}`;
+  const noteWhen = (t) => new Date(t).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).replace(/^(\w+),/, '$1');
+  const noteDay = (t) => new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/^(\w+),/, '$1');
+  const hereKey = () => LUMO.noteKey(D.L.url);
+  // What we know about the home being viewed, stored with its notes.
+  const snapshot = () => ({ address: D.L.address, photo: D.L.photo, price: D.L.price, sale: D.mode === 'invest' });
+  const savedFor = (key) => (D.state.saved || []).find((s) => LUMO.noteKey(s.url) === key);
+  // A home's address, photo and price: from its notes, else from Saved, else from the page when it's this home.
+  function homeOf(key) {
+    const r = D.state.notes?.[key];
+    if (r?.home?.address) return r.home;
+    const s = savedFor(key);
+    if (s) return { address: s.address, photo: s.photo, price: s.price, sale: s.sale };
+    if (key === hereKey()) return snapshot();
+    return r?.home || { address: '' };
+  }
+  const priceOf = (h) => (h.price ? (h.sale ? LUMO.short(h.price) : M(h.price) + ' /wk') : '');
+
+  // The Notes tab: every home with notes, last edited first.
+  function notesView() {
+    const rs = Object.values(D.state.notes || {}).filter((r) => r.entries?.length).sort((a, b) => b.t - a.t);
+    if (!rs.length) return `<div class="view empty"><span class="heart pen">${I('pencil', 26)}</span><div><b>Your notes</b>Tap ✎ on any home to jot down what the agent said, what you saw at the inspection, anything.</div></div>`;
+    return `<div class="view nrows">${rs.map((r) => {
+      const h = homeOf(r.key);
+      return `<button class="nrow" data-notes="${E(r.key)}">${h.photo ? `<img src="${E(h.photo)}" alt="">` : '<span class="ph"></span>'}
+        <span class="meta"><b>${E((h.address || '').split(',')[0] || 'This home')}</b><span>${nNotes(r.entries.length)} · last edited ${E(noteDay(r.t))}</span><span class="prev">${E(r.entries[0].text)}</span></span></button>`;
+    }).join('')}</div>`;
+  }
+
+  // One home's notes: head row, the entries (newest first), and the note box pinned below.
+  function homeNotesView(key, backLabel) {
+    const h = homeOf(key), r = D.state.notes?.[key], entries = r?.entries || [];
+    const parts = (h.address || '').split(',');
+    const sub = [parts.slice(1).join(',').trim(), priceOf(h)].filter(Boolean).join(' · ');
+    const entry = (e) => {
+      const lumo = e.by === 'lumo';
+      const when = `<div class="when">${lumo ? `${LUMO.logo(14)}<b>From Lumo</b> · ` : ''}${E(noteWhen(e.t))}${e.edited ? ' · edited' : ''}</div>`;
+      if (noteEdit === e.id) return `<div class="nentry editing${lumo ? ' lumo' : ''}" data-id="${E(e.id)}">${when}
+        <form class="nedit"><textarea rows="1" maxlength="2000" aria-label="Edit note">${E(e.text)}</textarea>
+        <div class="acts"><button type="button" class="ncancel">Cancel</button><button class="nsave">Save</button></div></form></div>`;
+      return `<div class="nentry${lumo ? ' lumo' : ''}" data-id="${E(e.id)}">${when}
+        <p class="ntext" role="button" tabindex="0" title="Edit">${E(e.text)}</p>
+        <button class="rm" data-rmnote="${E(e.id)}" aria-label="Delete this note">${I('x', 13)}</button></div>`;
+    };
+    return `<div class="view notes1">
+      <div class="nhead">
+        <button class="back" aria-label="Back">${I('back', 15)}${E(backLabel)}</button>
+        <div class="nhome">${h.photo ? `<img src="${E(h.photo)}" alt="">` : '<span class="ph"></span>'}
+          <div class="t"><b>${E(parts[0] || 'This home')}</b>${sub ? `<span>${E(sub)}</span>` : ''}</div>
+          ${entries.length ? `<button class="round delall" aria-label="Delete all notes for this home" title="Delete all notes for this home">${I('trash', 15)}</button>` : ''}</div>
+      </div>
+      ${entries.length ? `<div class="nlist">${entries.map(entry).join('')}</div>` : '<div class="nempty">No notes yet. What did the agent say? What did you notice?</div>'}
+    </div>`;
+  }
+
+  function noteComposer() {
+    const mic = LUMO.voice?.supported;
+    return `<form class="composer notec"><textarea rows="1" maxlength="2000" placeholder="Add a note" data-ph="Add a note" aria-label="Add a note"></textarea>${mic ? `<button type="button" class="mic" aria-label="Speak" aria-pressed="false" title="Speak (or hold ⌥1, tap ⌥2)">${I('mic', 16)}</button>` : ''}<button class="send" aria-label="Add note" disabled>${I('send', 15)}</button></form>`;
   }
 
   function foot() {
@@ -897,7 +993,7 @@
 
   function composer() {
     const mic = LUMO.voice?.supported;
-    return `<form class="composer"><input type="text" placeholder="Ask about this home" aria-label="Ask Lumo">${mic ? `<button type="button" class="mic" aria-label="Speak" aria-pressed="false" title="Speak (or hold ⌥1, tap ⌥2)">${I('mic', 16)}</button>` : ''}<button class="send" aria-label="Send" disabled>${I('send', 15)}</button></form>`;
+    return `<form class="composer"><input type="text" placeholder="Ask about this home" data-ph="Ask about this home" aria-label="Ask Lumo">${mic ? `<button type="button" class="mic" aria-label="Speak" aria-pressed="false" title="Speak (or hold ⌥1, tap ⌥2)">${I('mic', 16)}</button>` : ''}<button class="send" aria-label="Send" disabled>${I('send', 15)}</button></form>`;
   }
 
   function wirePanel() {
@@ -910,23 +1006,26 @@
     on('.heart', async () => {
       const { L } = D;
       const isSaved = (D.state.saved || []).some((s) => s.url === L.url);
-      D.state.saved = isSaved ? await LUMO.send('unsave', { url: L.url }) : await LUMO.send('save', { item: { url: L.url, address: L.address, price: L.price, sale: D.mode === 'invest', photo: L.photo, counts: LUMO.counts(D.checks), t: Date.now() } });
+      D.state.saved = (isSaved ? await LUMO.send('unsave', { url: L.url }) : await LUMO.send('save', { item: { url: L.url, address: L.address, price: L.price, sale: D.mode === 'invest', photo: L.photo, counts: LUMO.counts(D.checks), t: Date.now() } })) || D.state.saved;
       renderPanel();
+      if (isSaved) notesKept(L.url);
     });
-    panel.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => { view = b.dataset.v; detail = null; renderPanel(); }));
+    on('.pencil', () => openNotes(hereKey(), { focus: true }));
+    panel.querySelectorAll('[data-notes]').forEach((b) => (b.onclick = (e) => { e.preventDefault(); openNotes(b.dataset.notes, { focus: 'focus' in b.dataset }); }));
+    panel.querySelectorAll('.seg button').forEach((b) => (b.onclick = () => { leaveNotes(); view = b.dataset.v; detail = null; renderPanel(); }));
     panel.querySelectorAll('.row').forEach((b) => {
       b.onclick = () => { detail = b.dataset.id; renderPanel(); };
       b.onmouseenter = () => focusCheck(b.dataset.id);
       b.onmouseleave = () => focusCheck(null);
     });
     on('.more-grey', () => { showGrey = true; renderPanel(); });
-    on('[data-photos]', () => { detail = 'photos'; view = 'checks'; renderPanel(); });
-    on('[data-goto]', () => { view = panel.querySelector('[data-goto]').dataset.goto; detail = null; renderPanel(); });
-    on('.back', () => { detail = null; renderPanel(); });
+    on('[data-photos]', () => { leaveNotes(); detail = 'photos'; view = 'checks'; renderPanel(); });
+    on('[data-goto]', () => { leaveNotes(); view = panel.querySelector('[data-goto]').dataset.goto; detail = null; renderPanel(); });
+    on('.back', () => { if (noteHome) closeNotes(); else { detail = null; renderPanel(); } });
     const qt = panel.querySelector('.quote'); if (qt) qt.onclick = () => showInAd(qt.dataset.show);
     panel.querySelectorAll('.q').forEach((b) => (b.onclick = () => { view = 'ask'; detail = null; renderPanel(); ask(b.textContent); }));
-    panel.querySelectorAll('[data-unsave]').forEach((b) => (b.onclick = async (e) => { e.preventDefault(); D.state.saved = await LUMO.send('unsave', { url: b.dataset.unsave }); renderPanel(); }));
-    const f = panel.querySelector('.composer');
+    panel.querySelectorAll('[data-unsave]').forEach((b) => (b.onclick = async (e) => { e.preventDefault(); D.state.saved = (await LUMO.send('unsave', { url: b.dataset.unsave })) || D.state.saved; renderPanel(); notesKept(b.dataset.unsave); }));
+    const f = panel.querySelector('.composer:not(.notec)');
     if (f) {
       const inp = f.querySelector('input'), send = f.querySelector('.send');
       inp.oninput = () => (send.disabled = !inp.value.trim());
@@ -953,6 +1052,142 @@
     setTimeout(() => { if (m.target instanceof Range) flash(m, 1600); else { edges.get(m)?.classList.add('hot'); setTimeout(() => edges.get(m)?.classList.remove('hot'), 1600); } }, 450);
   }
 
+  // ---------- notes: open, add, edit, delete ----------
+  // One notes screen per home, the same from the pencil, a Saved tile or the Notes tab. Back returns to where you were.
+  function openNotes(key, { focus } = {}) {
+    if (!D || !key) return;
+    if (!noteHome) noteBack = { view, detail, scroll: panel.querySelector('.body')?.scrollTop || 0 };
+    noteHome = key; noteEdit = null; noteFocus = !!focus;
+    if (!open) toggle(true); else renderPanel();
+  }
+  function closeNotes() {
+    if (noteBack) { view = noteBack.view; detail = noteBack.detail; pendingScroll = noteBack.scroll; }
+    leaveNotes();
+    renderPanel();
+  }
+  function leaveNotes() { noteHome = noteBack = noteEdit = null; noteFocus = false; }
+
+  // Each background handler answers with the whole new notes map.
+  async function noteCall(type, data) {
+    const notes = await LUMO.send(type, data);
+    if (notes && D) D.state.notes = notes;
+    return !!notes;
+  }
+  function addNoteHere(text) {
+    const key = noteHome, here = key === hereKey();
+    // On this listing: send its full address and a fresh snapshot. Another home: keep what is stored.
+    const url = here ? D.L.url : D.state.notes?.[key]?.url || savedFor(key)?.url || key;
+    return noteCall('addNote', { url, home: here ? snapshot() : undefined, text });
+  }
+
+  const growArea = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  function wireNotes() {
+    const key = noteHome;
+    // The note box: Enter adds the note, Shift+Enter is a new line.
+    const f = panel.querySelector('.composer.notec');
+    if (f) {
+      const ta = f.querySelector('textarea'), send = f.querySelector('.send');
+      ta._grow = () => growArea(ta);
+      ta.oninput = () => { send.disabled = !ta.value.trim(); ta._grow(); };
+      ta.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } };
+      f.onsubmit = async (e) => {
+        e.preventDefault();
+        const text = ta.value.trim();
+        if (!text) return;
+        LUMO.voice?.abandon();
+        ta.value = ''; send.disabled = true; ta._grow();
+        if (!(await addNoteHere(text)) && !ta.value) { ta.value = text; send.disabled = false; ta._grow(); toast("Couldn't save the note. Try again."); }
+        if (noteHome === key) { renderPanel(); panel.querySelector('.composer.notec textarea')?.focus({ preventScroll: true }); }
+      };
+      const mic = f.querySelector('.mic'); if (mic) mic.onclick = () => LUMO.voice.toggle();
+      if (noteFocus) { noteFocus = false; setTimeout(() => ta.focus({ preventScroll: true }), 60); }
+    }
+    // Tap an entry to edit it in place.
+    panel.querySelectorAll('.ntext').forEach((p) => {
+      const go = () => { noteEdit = p.closest('[data-id]').dataset.id; renderPanel(); };
+      p.onclick = () => { if (!getSelection().toString()) go(); };
+      p.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    });
+    const ef = panel.querySelector('.nedit');
+    if (ef) {
+      const ta = ef.querySelector('textarea'), id = noteEdit;
+      ta._grow = () => growArea(ta);
+      ta.oninput = ta._grow;
+      const cancel = () => { noteEdit = null; renderPanel(); };
+      const save = async () => {
+        const text = ta.value.trim();
+        const old = D.state.notes?.[key]?.entries.find((x) => x.id === id);
+        noteEdit = null;
+        // Emptied: same as deleting it. Unchanged: nothing to save.
+        if (!text) await noteCall('removeNote', { key, id });
+        else if (old && text !== old.text) await noteCall('editNote', { key, id, text });
+        renderPanel();
+      };
+      ta.onkeydown = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); cancel(); }
+        else if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); save(); }
+      };
+      ef.onsubmit = (e) => { e.preventDefault(); save(); };
+      ef.querySelector('.ncancel').onclick = cancel;
+      requestAnimationFrame(() => { ta._grow(); ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); });
+    }
+    panel.querySelectorAll('[data-rmnote]').forEach((b) => (b.onclick = async () => {
+      if (noteEdit === b.dataset.rmnote) noteEdit = null;
+      await noteCall('removeNote', { key, id: b.dataset.rmnote });
+      renderPanel();
+    }));
+    const del = panel.querySelector('.delall');
+    if (del) del.onclick = async () => { noteEdit = null; await noteCall('removeHome', { key }); renderPanel(); };
+  }
+
+  // Unsaving a home never touches its notes. Say so.
+  function notesKept(url) {
+    if (D?.state.notes?.[LUMO.noteKey(url)]) toast('Removed from Saved. Your notes are kept in Notes.');
+  }
+
+  // A short message at the bottom of the panel, for 5 seconds. It survives re-renders.
+  function toast(text) {
+    clearTimeout(toastTimer);
+    toastMsg = text;
+    toastTimer = setTimeout(() => { toastMsg = null; panel?.querySelector('.toast')?.remove(); }, 5000);
+    showToast();
+  }
+  function showToast() {
+    if (!panel) return;
+    panel.querySelector('.toast')?.remove();
+    if (!toastMsg || !open) return;
+    const el = document.createElement('div');
+    el.className = 'toast'; el.setAttribute('role', 'status'); el.textContent = toastMsg;
+    panel.appendChild(el);
+  }
+
+  // Counts in the header and the tabs, updated without redrawing the panel.
+  function refreshCounts() {
+    if (!D || !open || !panel.querySelector('.seg')) return;
+    const n = D.state.notes?.[hereKey()]?.entries.length || 0;
+    const pen = panel.querySelector('.pencil');
+    if (pen) { pen.querySelector('.dotn')?.remove(); if (n) pen.insertAdjacentHTML('beforeend', `<span class="dotn">${n}</span>`); pen.setAttribute('aria-label', 'Notes for this home' + (n ? ` (${n})` : '')); }
+    for (const [k, c] of [['saved', (D.state.saved || []).length], ['notes', Object.keys(D.state.notes || {}).length]]) {
+      const b = panel.querySelector(`.seg [data-v="${k}"]`);
+      if (!b) continue;
+      b.querySelector('.n')?.remove();
+      if (c) b.insertAdjacentHTML('beforeend', `<span class="n">${c}</span>`);
+    }
+  }
+
+  // Notes or Saved changed in another tab (or here): pick it up. Don't redraw under someone typing or editing.
+  try {
+    chrome.storage.onChanged.addListener((ch, area) => {
+      if (area !== 'local' || !D || !(ch.notes || ch.saved)) return;
+      if (ch.notes) D.state.notes = ch.notes.newValue || {};
+      if (ch.saved) D.state.saved = ch.saved.newValue || [];
+      if (!open) return;
+      const inp = panel.querySelector('.composer input, .composer textarea');
+      const typing = noteEdit || (inp && inp.value.trim()) || (!noteHome && view === 'ask') || LUMO.voice?.listening;
+      if (typing) refreshCounts(); else renderPanel();
+    });
+  } catch {}
+
   // ---------- chat ----------
   function renderChat() {
     const box = panel.querySelector('.chat');
@@ -965,11 +1200,24 @@
       const m = chat[i], c = m.visual && D && D.checks.find((x) => x.id === m.visual);
       const el = document.createElement('div');
       el.className = 'turn ' + m.role;
+      // A real answer can be kept as a note on this home (not Lumo's opening line, its own notes, or a fallback).
+      const keep = m.role === 'lumo' && !m.opening && !m.note && !(LUMO.replyFallbacks || []).includes(m.text);
       el.innerHTML = `<div class="msg ${m.role}">${m.role === 'lumo' ? LUMO.logo(22) : ''}<p>${E(m.text)}</p></div>` +
-        (c ? `<div class="viz ${c.level}"><div class="vizhead"><i class="dot"></i><b>${E(c.title)}</b><button class="open" data-open="${E(c.id)}">Details</button></div>${proof(c.proof)}</div>` : '');
+        (c ? `<div class="viz ${c.level}"><div class="vizhead"><i class="dot"></i><b>${E(c.title)}</b><button class="open" data-open="${E(c.id)}">Details</button></div>${proof(c.proof)}</div>` : '') +
+        (keep && D ? `<button class="savenote"${m.savedNote ? ' disabled' : ''}>${m.savedNote ? 'Saved to notes ✓' : I('pencil', 12) + 'Save to notes'}</button>` : '');
       list.appendChild(el);
       wireMaps(el);
-      el.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { view = 'checks'; detail = b.dataset.open; renderPanel(); }));
+      const sn = el.querySelector('.savenote');
+      if (sn) sn.onclick = async () => {
+        if (m.savedNote || !D) return;
+        sn.disabled = true;
+        const ok = await noteCall('addNote', { url: D.L.url, home: snapshot(), text: m.text, by: 'lumo' });
+        if (!ok) { sn.disabled = false; toast("Couldn't save to notes. Try again."); return; }
+        m.savedNote = true;
+        sn.textContent = 'Saved to notes ✓';
+        refreshCounts();
+      };
+      el.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => { leaveNotes(); view = 'checks'; detail = b.dataset.open; renderPanel(); }));
     }
     const tail = box.querySelector('.tail');
     tail.innerHTML = (busy ? `<div class="msg lumo typing">${LUMO.logo(22)}<p><i></i><i></i><i></i></p></div>` : '') +
@@ -996,23 +1244,26 @@
     if (!host) return;
     if (!chat.length && D) chat.push({ role: 'lumo', text: LUMO.opening(D), opening: true });
     chat.push({ role: 'lumo', text, note: true });
-    if (open && view === 'ask') renderChat();
+    if (open && noteHome) toast(text);
+    else if (open && view === 'ask') renderChat();
   }
 
   // ---------- for content/voice.js ----------
-  // Open the panel on the chat tab and hand back the chat box (null until the panel has one).
-  function openChat() {
+  // Hand back the box to type into (null until the panel has one). On an open notes screen that is the note box;
+  // otherwise open the panel on the chat tab.
+  function openComposer() {
     mount();
-    view = 'ask'; detail = null;
+    if (open && noteHome) return chatBox();
+    leaveNotes(); view = 'ask'; detail = null;
     if (!open) toggle(true); else renderPanel();
     return chatBox();
   }
   function chatBox() {
     const f = open && panel?.querySelector('.composer');
-    return f ? { form: f, input: f.querySelector('input'), send: f.querySelector('.send'), mic: f.querySelector('.mic') } : null;
+    return f ? { form: f, input: f.querySelector('input, textarea'), send: f.querySelector('.send'), mic: f.querySelector('.mic') } : null;
   }
   // The mic frame lives in Lumo's closed shadow root, out of the page's reach.
   function attachFrame(el) { mount(); root.appendChild(el); }
 
-  LUMO.ui = { mount, destroy, scanning, render, note, chatNote, openChat, composer: chatBox, attachFrame, toggle: () => host && toggle(), get open() { return open; } };
+  LUMO.ui = { mount, destroy, scanning, render, note, chatNote, openComposer, openChat: openComposer, composer: chatBox, attachFrame, toggle: () => host && toggle(), get open() { return open; } };
 })();
