@@ -15,7 +15,9 @@ Microburbs Hackathon, Task 3: show Microburbs facts beside the listing a buyer i
 
 Pin Lumo to the toolbar. Clicking the icon opens or closes the panel. On a page that isn't a listing, it opens real Bondi rentals on Domain.
 
-Tested on a live Domain listing (Nov 2026): price, beds, description, features, coordinates and photos are read from the page's own data. realestate.com.au uses the same approach (its embedded listing data), but couldn't be opened from the test browser, so check one listing there yourself.
+Tested on live Domain listings, to rent and for sale (Nov 2026): price or price guide, beds, baths, parking, description, features, coordinates and photos are read from the page's own data. On Domain, "rent or buy" comes from the listing's `mode` ("buy" / "rent"); its `listingType` says "rent" even on homes for sale, so Lumo doesn't trust it. realestate.com.au is read from its embedded listing data, and if that changes, from the tab title ("House for Sale"), the price line and the summary strip. It couldn't be opened from the test browser, so check one listing there yourself.
+
+With the free `test` key, Investor mode on a real ad works in sandbox suburbs (Bondi and a few others) from suburb data: similar sales, rentals for rent now, yield, growth, vacancy, supply. Lumo finds the home in the suburb's own listings to get its location. Your hackathon key adds this home's valuation, sale history and land value. When the value rests only on suburb sales of homes unlike this one (different bathrooms, no valuation), Lumo says so and won't call it underquoting.
 
 ## Investor mode (homes for sale)
 

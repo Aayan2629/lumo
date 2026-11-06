@@ -66,6 +66,17 @@
   // The rent itself ("$980 per week"), never the bond or another dollar figure near it.
   // Looks in the price block first, then a little wider, then the whole page.
   function priceRange(L) {
+    // For sale: the whole guide, "$1,400,000 - $1,500,000" or "$1.4m".
+    if (L.sale) {
+      const re = /\$\s?\d[\d,]*(?:\.\d+)?\s*(?:m(?:il(?:lion)?)?\b|k\b)?(?:\s*(?:-|–|to)\s*\$?\s?\d[\d,]*(?:\.\d+)?\s*(?:m(?:il(?:lion)?)?\b|k\b)?)?/gi;
+      const el = L.regions.price;
+      for (const scope of [el, el?.parentElement].filter(Boolean)) {
+        const map = textMap(scope); re.lastIndex = 0; let m;
+        while ((m = re.exec(map.s))) { const v = Number(m[0].replace(/^\$\s?/, '').split(/[^\d,.]/)[0].replace(/,/g, '')); if (v >= 50000 || /\d\s*(m|k)/i.test(m[0])) return rangeAt(map, m.index, m.index + m[0].trimEnd().length); }
+      }
+      // No dollar figure ("Auction", "Contact agent"): mark the price line itself.
+      return el ? LUMO.rangeFor(el) : null;
+    }
     const any = /\$\s?[\d,]{3,6}(?:\.\d+)?/g;
     const exact = L.price ? new RegExp('\\$\\s?' + L.price.toLocaleString('en-AU').replace(',', ',?') + '(?![\\d,])', 'g') : any;
     const el = L.regions.price;

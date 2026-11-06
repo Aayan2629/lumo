@@ -27,12 +27,19 @@ function soldComps(rows, L, kind, selfGnaf) {
     const k = homeKind(x.property_type);
     return k === kind || (kind === 'townhouse' && k === 'unit');
   };
-  const all = rows.filter((x) => x.price > 50000 && same(x) && x.gnaf !== selfGnaf && (!x.date || new Date(x.date) > since));
-  let pick = all.filter((x) => Math.round(x.beds || 0) === Math.round(L.beds || 0));
-  let basis = `${L.beds || ''}-bed ${kind}s`;
+  // One row per sale: the same sale can be listed under two address spellings ("56a" and "56a-62").
+  const all = rows.filter((x) => x.price > 50000 && same(x) && x.gnaf !== selfGnaf && (!x.date || new Date(x.date) > since))
+    .filter((x, i, a) => a.findIndex((y) => y.price === x.price && y.date === x.date) === i);
+  const bedsOk = (x) => Math.round(x.beds || 0) === Math.round(L.beds || 0);
+  const bathsOk = (x) => !L.baths || x.baths == null || Math.round(x.baths) === Math.round(L.baths);
+  // Same bedrooms and bathrooms first. A second bathroom adds real value, so mixing them up overstates the price.
+  let pick = all.filter((x) => bedsOk(x) && bathsOk(x)), basis = `${L.beds || ''}-bed ${L.baths ? L.baths + '-bath ' : ''}${kind}s`, exact = true;
+  if (pick.length < 3) { pick = all.filter(bedsOk); basis = `${L.beds || ''}-bed ${kind}s`; exact = false; }
   if (pick.length < 3 && L.beds) { pick = all.filter((x) => Math.abs((x.beds || 0) - L.beds) <= 1); basis = `${L.beds - 1}–${L.beds + 1} bed ${kind}s`; }
+  // Bathrooms of the homes used, so the panel can say when they differ from this one.
+  const otherBaths = L.baths ? pick.filter((x) => x.baths != null && Math.round(x.baths) !== Math.round(L.baths)).length : 0;
   pick.sort((a, b) => (a.d ?? 1e9) - (b.d ?? 1e9) || new Date(b.date) - new Date(a.date));
-  return { n: pick.length, median: median(pick.map((x) => x.price)), prices: pick.map((x) => x.price), basis: basis.replace(/^-bed /, ''), sample: pick.slice(0, 8) };
+  return { n: pick.length, median: median(pick.map((x) => x.price)), prices: pick.map((x) => x.price), basis: basis.replace(/^-bed /, ''), exact, otherBaths, sample: pick.slice(0, 8) };
 }
 
 export async function investFacts(L, S, F, { mb, tryIt, note, home, daRows }) {
@@ -73,8 +80,8 @@ export async function investFacts(L, S, F, { mb, tryIt, note, home, daRows }) {
 
   // ---------- What it's worth ----------
   const rows = [
-    ...((sales?.results) || []).map((x) => ({ address: x.address, property_type: x.property_type, beds: x.bedrooms, price: x.sold_price, date: x.sold_date, gnaf: x.gnaf_pid, lat: x.lat, lng: x.lng })),
-    ...((Array.isArray(nearby) ? nearby : [])).map((x) => ({ address: String(x.address || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()), property_type: x.property_type, beds: x.bedrooms, price: x.price, date: x.date_sold, gnaf: x.gnaf_pid, lat: x.latitude, lng: x.longitude, dkm: x.dist_km }))
+    ...((sales?.results) || []).map((x) => ({ address: x.address, property_type: x.property_type, beds: x.bedrooms, baths: x.bathrooms, price: x.sold_price, date: x.sold_date, gnaf: x.gnaf_pid, lat: x.lat, lng: x.lng })),
+    ...((Array.isArray(nearby) ? nearby : [])).map((x) => ({ address: String(x.address || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()), property_type: x.property_type, beds: x.bedrooms, baths: x.bathrooms, price: x.price, date: x.date_sold, gnaf: x.gnaf_pid, lat: x.latitude, lng: x.longitude, dkm: x.dist_km }))
   ].filter((x, i, all) => all.findIndex((y) => y.gnaf === x.gnaf && y.date === x.date) === i);
   const dist = (x) => {
     if (x.dkm != null) return Math.round(x.dkm * 1000);
@@ -88,8 +95,11 @@ export async function investFacts(L, S, F, { mb, tryIt, note, home, daRows }) {
   const avmV = avm?.predicted_price ? { mid: Math.round(avm.predicted_price), low: Math.round(avm.predicted_price_low), high: Math.round(avm.predicted_price_high), confidence: avm.confidence_score, date: avm.prediction_date } : null;
   // One working value: the middle of what we have (the model valuation, similar sales, the suburb figure for this many bedrooms).
   const votes = [avmV?.mid, comps.n >= 2 ? comps.median : null, I.market.bedPrice].filter(Number.isFinite);
+  // How sure: a valuation of this exact home that agrees with sales is strong; suburb figures alone are rough.
+  const agree = avmV && comps.n >= 2 && Math.abs(avmV.mid - comps.median) / comps.median < 0.12;
+  const confidence = agree || (avmV && avmV.confidence >= 70) ? 'high' : avmV || (comps.exact && comps.n >= 5) ? 'medium' : 'low';
   I.value = {
-    avm: avmV, comps, bedPrice: I.market.bedPrice,
+    avm: avmV, comps, bedPrice: I.market.bedPrice, confidence,
     mid: median(votes),
     low: votes.length ? Math.min(...votes, avmV?.low ?? Infinity) : null,
     high: votes.length ? Math.max(...votes) : null,

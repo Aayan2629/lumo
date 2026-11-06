@@ -32,6 +32,15 @@
     return null;
   }
 
+  function forRent(mode, ...rest) {
+    if (/^(buy|sale|sold|auction|new-homes|project)/i.test(mode || '')) return false;
+    if (/^(rent|lease)/i.test(mode || '')) return true;
+    const title = rest.pop();
+    if (LUMO.parseRent(title) && /week|pw|p\.w|month|pcm/i.test(title || '')) return true;
+    if (rest.some((x) => /buy|sale|sold/i.test(x || ''))) return false;
+    return rest.some((x) => /rent|lease/i.test(x || '')) || !!LUMO.parseRent(title);
+  }
+
   function fromDomain() {
     try {
       const cp = JSON.parse($('#__NEXT_DATA__').textContent).props.pageProps.componentProps;
@@ -42,7 +51,9 @@
       return {
         address: s.address, suburb: cp.suburb, state: cp.stateAbbreviation || cp.state || (s.address || '').match(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b/)?.[1], postcode: cp.postcode,
         priceText: s.title, price: LUMO.parseRent(s.title), beds: s.beds, baths: s.baths, parking: s.parking,
-        type: s.propertyType || cp.propertyType, rent: /rent/i.test(s.listingType || s.mode || cp.listingType || '') || (!/buy|sale|sold/i.test(s.listingType || s.mode || '') && !!LUMO.parseRent(s.title)),
+        // Rent or buy: Domain's "mode" is the one to trust ("buy" or "rent"). Its listingType says "rent" even on
+        // homes for sale, so it is only a fallback, and a weekly price settles it when neither is there.
+        type: s.propertyType || cp.propertyType, rent: forRent(s.mode, s.listingType, cp.listingType, s.title),
         description: Array.isArray(cp.description) ? cp.description.join('\n') : cp.description,
         features: (cp.structuredFeatures || []).map((f) => f.name).concat(cp.features || []),
         // The listing's own pin first; a deep search could pick up a nearby listing's coordinates.
@@ -84,7 +95,7 @@
   const DESC = ['[data-lumo="description"]', '[data-testid="listing-details__description"]', '[data-testid*="description"]', '[class*="property-description"]', '[class*="PropertyDescription"]'];
   const HEAD = ['[data-lumo="headline"]', '[data-testid="listing-details__description-headline"]', '[class*="description__headline"]'];
   const FEAT = ['[data-lumo="features"]', '[data-testid*="additional-features"]', '[data-testid="property-features"]', '[class*="property-features"]', '[class*="propertyFeatures"]'];
-  const PRICE = ['[data-lumo="price"]', '[data-testid="listing-details__summary-title"]', '[data-testid*="price"]', '.property-price', '[class*="property-price"]', '[class*="PropertyPrice"]'];
+  const PRICE = ['[data-lumo="price"]', '[data-testid="listing-details__price"]', '[data-testid="listing-details__summary-title"]', '[data-testid*="price"]', '.property-price', '[class*="property-price"]', '[class*="PropertyPrice"]'];
   // The summary strip: "3 Beds 2 Baths 2 Parking".
   const FACTS = ['[data-lumo="facts"]', '[data-testid="property-features"]', '[data-testid="property-features-wrapper"]', '[class*="property-info__primary-features"]', '[class*="primary-features"]', '[class*="property-features__wrapper"]'];
   const GALLERY = ['[data-lumo="gallery"]', '[data-testid*="gallery"]', '[class*="gallery"]', '[class*="Gallery"]', '[class*="carousel"]', '[class*="Carousel"]'];
@@ -127,7 +138,7 @@
     for (const s of new Set(scopes)) {
       for (const b of s.querySelectorAll('button, [role="button"], a')) {
         const t = text(b);
-        if (t.length > 24 || !/^(read|show|see|view)\s+(more|all|full)|^more$|^expand/i.test(t)) continue;
+        if (t.length > 26 || !/^(read|show|see|view)\s+more|^more$|^expand|^show all features?|^(read|view) full (description|ad)/i.test(t)) continue;
         if (b.getAttribute('aria-expanded') === 'true' || b.closest('[data-lumo-ui]')) continue;
         try { b.click(); n++; } catch {}
       }
@@ -147,8 +158,16 @@
     const kind = LUMO.pageKind();
     if (!kind) return null;
     const data = (kind === 'domain' ? fromDomain() : kind === 'rea' ? fromRea() : fromDemo()) || {};
-    // To rent or to buy? The page's data says; if it doesn't, a weekly price means rent.
-    const sale = data.rent === false || (data.rent == null && /\/(buy|sale)\b|for-sale/i.test(location.pathname));
+    // To rent or to buy? The page's own data first. If a site changes its data and Lumo can't read it,
+    // the tab title ("House for Sale", "Apartment For Rent") and then the price line decide.
+    let sale = data.rent === false ? true : data.rent === true ? false : null;
+    if (sale == null) sale = /\bfor sale\b|\bsold\b|\bauction\b/i.test(document.title) ? true : /\bfor (rent|lease)\b/i.test(document.title) ? false : null;
+    if (sale == null) {
+      const pt = data.priceText || text(first(PRICE));
+      sale = LUMO.parseRent(pt) && /week|p\.?w|month|pcm/i.test(pt) ? false
+        : (LUMO.parseSale(pt).price || /auction|contact agent|expressions? of interest|price on (request|application)|for sale|offers/i.test(pt)) ? true
+        : /\/(buy|sale)\b|for-sale/i.test(location.pathname);
+    }
     const priceEl = priceElement(sale);
     const desc = first(DESC) || biggestTextBlock();
     const L = {
@@ -172,7 +191,16 @@
     const blob = text(document.body).slice(0, 20000);
     if (L.beds == null) L.beds = Number(blob.match(/(\d)\s*(?:bed(?:room)?s?|br)\b/i)?.[1]) || null;
     if (L.parking == null) L.parking = Number(blob.match(/(\d)\s*(?:car|parking|garage)/i)?.[1]) || 0;
+    // Suburb and postcode from the address when the page's data didn't give them:
+    // "9/47 Penkivil Street, Bondi NSW 2026" and "49 Watson Street, Bondi, NSW 2026" both work.
+    const am = String(L.address || '').match(/,\s*([A-Za-z][A-Za-z '’-]*?)\s*,?\s+(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b\s*(\d{4})?/i);
+    if (!L.suburb && am) L.suburb = am[1].trim();
+    if (!L.state && am) L.state = am[2].toUpperCase();
+    if (!L.postcode && am?.[3]) L.postcode = am[3];
     if (!L.suburb && L.address) L.suburb = L.address.split(',').slice(-1)[0].replace(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b.*$/, '').trim();
+    const factsText = text(first(FACTS)) + ' ' + text(document.querySelector('[class*="property-type"], [data-testid*="property-type"]'));
+    if (L.baths == null) L.baths = Number((factsText.match(/(\d)\s*bath/i) || blob.match(/(\d)\s*bath(?:room)?s?\b/i) || [])[1]) || null;
+    if (!L.type) L.type = (factsText.match(/\b(house|apartment|unit|flat|townhouse|villa|terrace|duplex|studio|semi-detached)\b/i) || [])[1] || null;
     L.regions = { price: priceEl, text: [first(HEAD), desc, first(FEAT)].filter(Boolean), facts: first(FACTS) };
     return L;
   };

@@ -51,16 +51,29 @@ function microburbs(key, snap) {
   };
 }
 
+// "Unit 9, 47 Penkivil St" and "9/47 Penkivil Street, Bondi NSW" both become "9/47 penkivil street".
+const ABBR = { st: 'street', rd: 'road', ave: 'avenue', av: 'avenue', pde: 'parade', cres: 'crescent', cr: 'crescent', pl: 'place', ln: 'lane', dr: 'drive', hwy: 'highway', cct: 'circuit', tce: 'terrace', cl: 'close', ct: 'court', blvd: 'boulevard', esp: 'esplanade', gr: 'grove', sq: 'square' };
+export function streetKey(a) {
+  let s = String(a || '').toLowerCase().split(',').length > 1 && /^(unit|apartment|apt|flat|suite|shop|level|villa|townhouse)\b/.test(String(a).toLowerCase())
+    ? String(a).toLowerCase().replace(/^(?:unit|apartment|apt|flat|suite|shop|villa|townhouse)\s+([\w-]+)\s*,\s*/, '$1/')
+    : String(a || '').toLowerCase();
+  s = s.split(',')[0].replace(/^(?:unit|apartment|apt|flat|suite|villa|townhouse)\s+([\w-]+)\s*\/?\s*/, '$1/').replace(/\s*\/\s*/g, '/').replace(/[.]/g, '').replace(/\s+/g, ' ').trim();
+  return s.split(' ').map((w) => ABBR[w] || w).join(' ');
+}
+
 // Similar listings right now in the same suburb: same type, same bedrooms.
 function comparables(results, L, home) {
   const type = /house|town|villa|terrace|duplex|semi/i.test(L.type || '') ? 'House' : 'Unit';
-  const same = (results || []).filter((x) =>
+  const beds = (results || []).filter((x) =>
     x.price > 100 && x.price < 20000 &&
     (x.property_type || '').toLowerCase() === type.toLowerCase() &&
     Math.round(x.attributes?.bedrooms || 0) === Math.round(L.beds || 0) &&
     !(L.gnaf && x.gnaf_pid === L.gnaf) &&
     // Skip this same listing (same spot, same price), so it doesn't compare against itself.
     !(home && x.coordinates && x.price === L.price && metres(home, { lat: x.coordinates.latitude, lng: x.coordinates.longitude }) < 40));
+  // Same bathrooms too when there are enough: a second bathroom lifts the rent.
+  const baths = L.baths ? beds.filter((x) => x.attributes?.bathrooms == null || Math.round(x.attributes.bathrooms) === Math.round(L.baths)) : [];
+  const same = baths.length >= 3 ? baths : beds;
   const withPark = same.filter((x) => x.attributes?.garage_spaces > 0).map((x) => x.price);
   const without = same.filter((x) => !(x.attributes?.garage_spaces > 0)).map((x) => x.price);
   return {
@@ -499,6 +512,15 @@ export async function gatherFacts(L, S, profile) {
     const sal = L.suburb ? await tryIt('suburb', () => mb.sal(L.suburb, L.state)) : null;
     if (!L.gnaf && L.address && !L.demo) L.gnaf = await tryIt('address', () => mb.gnaf(L.address));
     const S_ = sal ? encodeURIComponent(sal) : null;
+    // No address match (the free key can't look addresses up): find this home in the suburb's own listings instead.
+    if (!L.gnaf && S_ && L.address) {
+      const list = await tryIt('listings', () => mb.get('/suburbs/' + S_ + '/listings/' + (L.rent === false ? 'for-sale?limit=300' : 'for-rent?limit=300'), 1));
+      const want = streetKey(L.address);
+      const hit = want && (list?.results || []).find((x) => streetKey(x.address?.street || x.area_name) === want);
+      if (hit?.gnaf_pid) L.gnaf = hit.gnaf_pid;
+      // The listing's own pin, when the page didn't give one.
+      if (hit?.coordinates && !(L.lat && L.lng)) { L.lat = hit.coordinates.latitude; L.lng = hit.coordinates.longitude; }
+    }
     const r = await Promise.all([
       S_ ? tryIt('listings', () => mb.get('/suburbs/' + S_ + '/listings/for-rent?limit=300', 1)) : null,
       S_ ? tryIt('pois', () => mb.get('/suburbs/' + S_ + '/lifestyle/pois', 30)) : null,
@@ -513,7 +535,7 @@ export async function gatherFacts(L, S, profile) {
     return { sal, r };
   })();
   // Without coordinates on the page, Microburbs gives the location.
-  if (!home) { const { r } = await mbP; if (r[5]) home = { lat: r[5].center_lat, lng: r[5].center_lng }; }
+  if (!home) { const { r } = await mbP; if (L.lat && L.lng) home = { lat: L.lat, lng: L.lng }; else if (r[5]) home = { lat: r[5].center_lat, lng: r[5].center_lng }; }
   F.home = home;
 
   // 2. Everything that only needs the location starts at the same time.

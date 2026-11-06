@@ -96,7 +96,10 @@
   // The price Lumo works with. A low guide is not what the home will sell for, so when the guide
   // sits well under what similar homes sold for, Lumo uses the value instead and says so.
   function workingPrice(L, F) {
-    const sale = L.sale || {}, v = F.inv?.value?.mid;
+    const sale = L.sale || {}, V = F.inv?.value || {};
+    // Only swap in the value when it is solid. A rough value (suburb sales of homes unlike this one) can't overrule the ad.
+    const v = V.confidence === 'low' || V.comps?.otherBaths > 0 ? (sale.price ? null : V.mid) : V.mid;
+    if (sale.kind === 'range' && !v) return { price: sale.high, basis: 'the top of the price range' };
     if (sale.kind === 'fixed') return { price: sale.price, basis: 'the asking price' };
     if (sale.kind === 'range') return v && sale.high < v * 0.95 ? { price: v, basis: 'what similar homes sold for (the range looks low)' } : { price: sale.price, basis: 'the middle of the price range' };
     if (sale.kind === 'guide') return v && sale.price < v * 0.95 ? { price: v, basis: 'what similar homes sold for (the guide looks low)' } : { price: sale.price, basis: 'the price guide' };
@@ -194,7 +197,7 @@
 
     // 1. Price against what similar homes sold for (traps 1–8)
     const marketProof = mid ? {
-      kind: 'market', sale: true, me: sale.kind === 'hidden' ? null : sale.price, median: mid, prices: V.comps?.prices || [],
+      kind: 'market', sale: true, me: sale.kind === 'hidden' || sale.kind === 'auction' ? null : sale.kind === 'range' ? sale.low : sale.price, median: mid, prices: V.comps?.prices || [],
       band: V.avm ? [V.avm.low, V.avm.high] : null,
       comps: (V.comps?.sample || []).map((c) => ({ address: c.address, price: c.price, d: c.d, date: c.date, beds: c.beds })),
       items: [{ label: sale.kind === 'hidden' ? 'Value' : 'This ad', v: sale.price || mid, me: true }, { label: 'Value', v: mid }],
@@ -210,9 +213,12 @@
       const ref = sale.kind === 'range' ? sale.low : sale.price;
       const pct = (ref - mid) / mid;
       const isGuide = sale.kind !== 'fixed';
+      // How far to trust the value: rough when it rests on suburb sales of homes unlike this one.
+      const rough = V.confidence === 'low' || V.comps?.otherBaths > 0;
+      const caveat = V.comps?.otherBaths ? ` Most of those sales had ${L.baths === 1 ? 'more bathrooms' : 'a different number of bathrooms'}, so the real gap is likely smaller.` : rough ? ' Lumo has no valuation of this exact home yet, so treat the gap as a guide.' : '';
       if (isGuide && pct < -0.08) {
-        add({ id: 'value', finding: 1, level: 'red', tag: 'Guide low', title: 'Price guide looks low', line: `Guide ${S(ref)}. Similar homes sold for about ${S(mid)}.`, anchors: [{ type: 'price' }], proof: marketProof,
-          meaning: `A guide ${Math.round(-pct * 100)}% under recent sales pulls in buyers who then get outbid. Plan your budget around ${S(mid)}, not the guide.`,
+        add({ id: 'value', finding: 1, level: rough ? 'amber' : 'red', tag: 'Guide low', title: rough ? 'Guide is under recent sales' : 'Price guide looks low', line: `Guide ${S(ref)}. Similar homes sold for about ${S(mid)}.`, anchors: [{ type: 'price' }], proof: marketProof,
+          meaning: `A guide ${Math.round(-pct * 100)}% under recent sales pulls in buyers who then get outbid. Plan your budget around ${S(mid)}, not the guide.${caveat}`,
           next: 'Ask which sales the agent used to set the guide. In NSW the guide can’t be lower than the agent’s own estimate.',
           questions: ['What will it really sell for?', 'Which homes sold nearby?', 'What should I offer?'], sources: ['Microburbs valuation', 'Microburbs sales'] });
       } else {
@@ -220,7 +226,7 @@
         add({ id: 'value', finding: 1, level: lv, tag: lv === 'green' ? 'Fair price' : 'Pricey',
           title: pct > 0.1 ? 'Priced above similar sales' : pct > 0.04 ? 'A little above similar sales' : pct < -0.04 ? 'Below similar sales' : 'In line with similar sales',
           line: `${isGuide ? 'Guide' : 'Asks'} ${S(ref)}. Similar homes sold for about ${S(mid)}.`, anchors: [{ type: 'price' }], proof: marketProof,
-          meaning: pct > 0.04 ? `About ${S(ref - mid)} more than the going price. That money doesn’t earn rent.` : pct < -0.04 ? 'Under the going price. Check why: condition, noise or strata issues are common reasons.' : 'Close to what similar homes sell for.',
+          meaning: (pct > 0.04 ? `About ${S(ref - mid)} more than the going price. That money doesn’t earn rent.` : pct < -0.04 ? 'Under the going price. Check why: condition, noise or strata issues are common reasons.' : 'Close to what similar homes sell for.') + caveat,
           next: pct > 0.04 ? `Offer closer to ${S(Math.round(mid / 5000) * 5000)} and show the agent the sales.` : 'Get a building and pest report before you commit.',
           questions: ['Which homes sold nearby?', 'What should I offer?'], sources: ['Microburbs valuation', 'Microburbs sales'] });
       }
@@ -260,8 +266,10 @@
     if (model?.gross != null) {
       const sy = mk.yield;
       const lv = sy ? (model.gross >= sy * 1.05 ? 'green' : model.gross >= sy * 0.9 ? 'info' : 'amber') : model.net >= 0.03 ? 'green' : 'info';
-      add({ id: 'yield', finding: 12, level: lv, title: lv === 'green' ? 'Better rent return than the suburb' : lv === 'amber' ? 'Lower rent return than the suburb' : 'Rent return in line with the suburb',
-        line: `${P1(model.gross)} gross, ${P1(model.net)} after costs.${sy ? ` Suburb: ${P1(sy)}.` : ''}`, anchors: has('yield') ? [{ type: 'claim', key: 'yield' }] : [],
+      // Far above the suburb usually means the price will end up higher than the ad says, not a bargain.
+      const tooGood = sy && model.gross > sy * 1.5 && sale.kind !== 'fixed';
+      add({ id: 'yield', finding: 12, level: tooGood ? 'amber' : lv, title: tooGood ? 'Rent return looks too good' : lv === 'green' ? 'Better rent return than the suburb' : lv === 'amber' ? 'Lower rent return than the suburb' : 'Rent return in line with the suburb',
+        line: `${P1(model.gross)} gross, ${P1(model.net)} after costs.${sy ? ` Suburb: ${P1(sy)}.` : ''}${tooGood ? ' Likely the price ends up above the guide.' : ''}`, anchors: has('yield') ? [{ type: 'claim', key: 'yield' }] : [],
         proof: { kind: 'bars', fmt: 'pct', items: [{ label: 'Gross', v: model.gross, me: true }, { label: 'After costs', v: model.net }, sy && { label: 'Suburb', v: sy }].filter(Boolean), note: `On ${S(model.price)}, ${model.priceBasis}. Costs are in Numbers.` },
         meaning: 'Gross yield is rent over price. After costs is what is left once strata, rates, insurance, the manager and empty weeks are paid, before the loan.',
         next: 'Open Numbers to see each cost and change the deposit and rate.', questions: ['What does it cost to hold?', 'What will it rent for?'], sources: ['Lumo’s sums', 'Microburbs market'] });

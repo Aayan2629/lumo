@@ -32,6 +32,8 @@
     const F = (await Promise.race([LUMO.send('facts', { listing: plain }), new Promise((r) => setTimeout(() => r(null), 28000))])) || { sources: [], errors: ['data took too long'] };
     if (id !== run) return;
     log('data from', (F.sources || []).map((x) => x.name).join(', ') || 'nothing', F.errors?.length ? { gaps: F.errors } : '');
+    // The page had no map pin, but the data found the home: use it for Maps and Street View.
+    if (!(L.lat && L.lng) && F.home) { L.lat = F.home.lat; L.lng = F.home.lng; }
     const checks = mode === 'invest' ? LUMO.investRules(L, F, state.profile, claims) : LUMO.rules(L, F, state.profile, claims);
     data = { mode, L, F, checks, claims, state, kb, marks: LUMO.buildMarks(checks, L, claims) };
     log(checks.length + ' checks,', data.marks.text.length + ' words and ' + data.marks.photos.length + ' photos marked');
