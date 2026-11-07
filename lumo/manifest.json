@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Lumo",
   "short_name": "Lumo",
-  "version": "0.6.1",
+  "version": "0.6.3",
   "description": "Reads the property ad you are looking at and checks its claims against real data. Rentals for renters, sales for investors.",
   "icons": {
     "16": "icons/16.png",
@@ -31,6 +31,7 @@
     "https://www.realestate.com.au/*",
     "https://www.domain.com.au/*",
     "https://api.microburbs.com.au/*",
+    "https://api-ht.microburbs.com.au/*",
     "https://overpass-api.de/*",
     "https://api.transport.nsw.gov.au/*",
     "https://routes.googleapis.com/*",
@@ -48,7 +49,8 @@
     "https://generativelanguage.googleapis.com/*",
     "https://api.mistral.ai/*",
     "https://api.groq.com/*",
-    "https://openrouter.ai/*"
+    "https://openrouter.ai/*",
+    "https://nominatim.openstreetmap.org/*"
   ],
   "optional_host_permissions": [
     "https://*/*",

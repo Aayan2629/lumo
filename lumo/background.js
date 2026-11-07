@@ -3,7 +3,7 @@
 import { getAll, noteKey } from './lib/store.js';
 import { gatherFacts } from './lib/providers.js';
 import { askLLM, knowledge } from './lib/ai.js';
-import { loadEnv, envSettings } from './lib/env.js';
+import { loadEnv, envSettings, demoArea } from './lib/env.js';
 
 const LISTING_SITES = /^https:\/\/www\.(domain|realestate)\.com\.au\//;
 const CONTENT = ["content/core.js", "content/extract.js", "content/rules.js", "content/invest.js", "content/anchor.js", "content/ui.css.js", "content/ui.js", "content/voice.js", "content/chat.js", "content/main.js"];
@@ -28,8 +28,9 @@ chrome.action.onClicked.addListener(async (tab) => {
   try { await chrome.tabs.sendMessage(tab.id, { type: 'toggle' }); return; } catch {}
   // Lumo isn't on this tab yet (it was open before Lumo loaded): add it now.
   if (LISTING_SITES.test(tab.url || '') && (await inject(tab.id))) return;
-  // Not a listing site: open real rentals in Bondi, a suburb the free Microburbs test key covers.
-  chrome.tabs.create({ url: 'https://www.domain.com.au/rent/bondi-nsw-2026/?ptype=apartment-unit-flat' });
+  // Not a listing site: open real rentals in a suburb the Microburbs key covers.
+  const a = demoArea(await loadEnv());
+  chrome.tabs.create({ url: `https://www.domain.com.au/rent/${a.slug}/?ptype=apartment-unit-flat` });
 });
 
 // Notes: every change reads, edits and writes the whole map, one at a time, so two quick writes

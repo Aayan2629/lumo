@@ -12,13 +12,17 @@ Microburbs Hackathon, Task 3: show Microburbs facts beside the listing a buyer i
 2. Copy `lumo/.env.example` to `lumo/.env` and fill in the keys you have (see **Keys** below). Lumo still runs with an empty file.
 3. Click **Load unpacked** and pick this `lumo` folder.
 4. The setup page opens. Fill in You and Places (30 seconds).
-5. Click **Try it on real Bondi rentals** and open any listing. Bondi works on the free key; your Microburbs key unlocks every suburb.
+5. Click **Try it on real … rentals** and open any listing. With the hackathon key it opens Surry Hills (the key covers the City of Sydney's 29 suburbs); with the free `test` key it opens Bondi.
 
-Pin Lumo to the toolbar. Clicking the icon opens or closes the panel. On a page that isn't a listing, it opens real Bondi rentals on Domain.
+Pin Lumo to the toolbar. Clicking the icon opens or closes the panel. On a page that isn't a listing, it opens real rentals on Domain in a suburb your key covers.
 
 ### Keys
 
-Every API key lives in `lumo/.env`, which git ignores. `lumo/.env.example` shows the layout: `LLM_API_KEY`, `LLM_MODEL`, `LLM_ENDPOINT`, `MICROBURBS_KEY` (`test` = the free sandbox), `GOOGLE_MAPS_KEY`, `TFNSW_KEY`, `MAPILLARY_TOKEN`. After editing it, reload Lumo in `chrome://extensions`. Settings → Data shows which keys are loaded, never their values. Anyone with the extension folder can read the file, so don't share a build that has real keys in it.
+Every API key lives in `lumo/.env`, which git ignores. `lumo/.env.example` shows the layout: `LLM_API_KEY`, `LLM_MODEL`, `LLM_ENDPOINT`, `MICROBURBS_KEY` (`test` = the free sandbox; a hackathon `ht26_...` key uses `api-ht.microburbs.com.au`), `MICROBURBS_BASE` (optional host override), `GOOGLE_MAPS_KEY`, `TFNSW_KEY`, `MAPILLARY_TOKEN`. After editing it, reload Lumo in `chrome://extensions`. Settings → Data shows which keys are loaded, never their values. Anyone with the extension folder can read the file, so don't share a build that has real keys in it.
+
+### The hackathon key
+
+A `ht26_...` key talks to `https://api-ht.microburbs.com.au` and covers the City of Sydney's 29 suburbs and every address in them (Surry Hills, Redfern, Glebe (NSW), Pyrmont, Zetland and the rest). Outside that area the API returns 403, and Lumo asks the free sandbox instead, so Bondi and the demos keep working. Every endpoint Lumo calls exists on both hosts with the same fields. Lumo spaces its calls to stay under the key's 10 requests a second and retries a 429.
 
 ### Voice
 
@@ -45,12 +49,11 @@ Open a listing **for sale** and Lumo checks it the way an investor would. The pa
 
 | Piece | What it does |
 |---|---|
-| Score ring | One number out of 100: price, rent return, growth, risk and tenant demand, weighted. The breakdown is in Numbers. |
 | Key numbers | Rent a week, gross yield, and what it costs (or pays) each week after the loan. |
 | Value meter | The ad's price or guide against Lumo's value, with the Microburbs valuation range as a band. |
 | Checks | The ad's claims tested against data, from `knowledge/investor-traps.md`: a low price guide (underquoting), a high rent appraisal, "priced to sell", "strong rental demand", "tightly held", "blue-chip", "development potential" against the zoning, pressure words, sale history, approved plans on the lot, supply nearby, investor-heavy areas, strata, bushfire and flood. |
-| Numbers | A live calculator. Drag price, deposit and interest rate, or switch interest only / principal and interest, and every figure updates: money in and out each week, yield after costs, cash to buy with NSW stamp duty, the score breakdown and suburb growth. Your deposit, rate and loan type are remembered for every home. |
-| Ask | Answers about value, rent, holding cost, cash to buy, growth, supply, strata, land and the score. |
+| Numbers | A live calculator. Drag price, deposit and interest rate, or switch interest only / principal and interest, and every figure updates: money in and out each week, yield after costs, cash to buy with NSW stamp duty and suburb growth. Your deposit, rate and loan type are remembered for every home. |
+| Ask | Answers about value, rent, holding cost, cash to buy, growth, supply, strata and land. |
 
 ![Numbers](docs/screenshot-numbers.png)
 
@@ -77,9 +80,9 @@ Change the defaults in Settings → Investor.
 | Panel | Verdict, asking rent against similar homes and the yearly difference, Google Maps and Street View, then Checks, Ask Lumo and Saved. Drag it by the top bar. The minus button folds it back into the dock. The eye hides all marks for a clean page. |
 | Your places | Time to uni or work from every listing, hours a week, and a button that opens the trip in Google Maps. |
 | Check detail | The quote from the ad, proof (a mini map, bars or rent history), what it means, next step, follow-up questions. |
-| Ask Lumo | Chat about this home, typed or spoken (⌥1 / ⌥2). Answers come from an LLM using the knowledge files and the checks. With no LLM key in `.env`, it replies "Insert key". |
+| Ask Lumo | Chat about this home, typed or spoken (⌥1 / ⌥2). Answers come from an LLM using the knowledge files and the checks. With no LLM key in `.env`, it answers from its own checks (rent, noise, transport, value, costs and more). |
 | Saved | Heart a home to keep it with its checks: the swipe shortlist, inside the browser. |
-| Settings | Your profile (budget, car, gym, supermarket, what matters), places, Renter ID card, which `.env` keys are loaded, microphone and voice shortcuts. |
+| Settings | Your profile (budget, car, gym, supermarket, what matters), places (pick a uni or type any address for work and anywhere else), which `.env` keys are loaded, microphone and voice shortcuts. |
 
 ## Data and APIs
 
@@ -145,7 +148,7 @@ lib/ai.js              LLM answers (provider set on hackathon day)
 content/core.js        Shared helpers, icons, logo
 content/extract.js     Reads the listing: page data first, then the visible page
 content/rules.js       Turns facts into checks (rentals)
-content/invest.js      Investor mode: sale price, weekly sums, score, checks
+content/invest.js      Investor mode: sale price, weekly sums, checks
 content/anchor.js      Finds claim words, pins marks to text and photos
 content/ui.css.js      The glass look
 content/ui.js          Pill, marks, bubble, panel
@@ -165,5 +168,4 @@ icons/, fonts/         Beam icon, Schibsted Grotesk
 
 - Lumo only reads the page you have open. It doesn't crawl or scrape other pages.
 - No API keys in git. Keys live in `lumo/.env`, which is git-ignored, and never reach the page.
-- Renter ID documents are a checklist only. Nothing is uploaded.
 - Every number comes from a source named under the check. When data is missing, the check says "not checked yet" instead of guessing.

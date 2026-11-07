@@ -1,6 +1,6 @@
 // Lumo settings and onboarding. Everything saves as you go.
 import { getAll, DEFAULT_SETTINGS } from '../lib/store.js';
-import { loadEnv, ENV_KEYS } from '../lib/env.js';
+import { loadEnv, ENV_KEYS, demoArea } from '../lib/env.js';
 
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
@@ -14,7 +14,6 @@ const PLACES = {
   'Macquarie University': [-33.7738, 151.1126], 'WSU Parramatta': [-33.815, 151.0011], 'ACU North Sydney': [-33.8389, 151.2072],
   'Sydney CBD': [-33.8731, 151.2071], 'Parramatta CBD': [-33.815, 151.003], 'North Sydney': [-33.8395, 151.2074]
 };
-const DOCS = [['photoId', 'Photo ID', 40], ['secondId', 'Second ID', 30], ['income', 'Proof of income', 30], ['history', 'Rental history', 0], ['bank', 'Bank statement', 0]];
 
 // ---------- save ----------
 let t = 0;
@@ -28,7 +27,7 @@ function save() {
 }
 
 // ---------- tabs ----------
-const tabs = ['you', 'places', 'id', 'invest', 'data'];
+const tabs = ['you', 'places', 'invest', 'data'];
 function show(name) {
   $$('.seg button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   $$('section.tab').forEach((s) => (s.hidden = s.dataset.tab !== name));
@@ -40,7 +39,7 @@ show(tabs.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'you');
 
 // ---------- You ----------
 $('#name').value = P.name;
-$('#name').oninput = (e) => { P.name = e.target.value; save(); drawId(); };
+$('#name').oninput = (e) => { P.name = e.target.value; save(); };
 const role = () => $$('#role button').forEach((b) => b.classList.toggle('on', b.dataset.v === P.role));
 $$('#role button').forEach((b) => (b.onclick = () => { P.role = b.dataset.v; role(); save(); }));
 role();
@@ -83,59 +82,87 @@ $('#priorities').onclick = (e) => {
 ranks();
 
 // ---------- Places ----------
+// Each place: what it is (Uni, Work, Other), where it is (pick a suggestion or type any address), and how
+// many days a week you go. A typed address is found with OpenStreetMap, and the pin is what Lumo times trips to.
+const KINDS = ['Uni', 'Work', 'Other'];
+const UNIS = ['UNSW Kensington', 'University of Sydney', 'UTS', 'Macquarie University', 'WSU Parramatta', 'ACU North Sydney'];
+const SUGGEST = { Uni: UNIS, Work: ['Sydney CBD', 'Parramatta CBD', 'North Sydney'], Other: Object.keys(PLACES) };
+for (const k of KINDS) $('#pl-' + k).innerHTML = SUGGEST[k].map((n) => `<option value="${n}">`).join('');
+const esc = (x) => String(x ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const status = {};   // row index -> { text, kind } while finding an address
+function whereLine(p, i) {
+  const st = status[i];
+  if (st) return `<p class="where ${st.kind}">${esc(st.text)}</p>`;
+  if (!p.name) return `<p class="where">Type an address or pick a place.</p>`;
+  if (!(p.lat && p.lng)) return `<p class="where bad">Lumo couldn't find this place. Try the full address with the suburb.</p>`;
+  return PLACES[p.name] ? '' : `<p class="where ok">${esc(p.address || p.name)}</p>`;
+}
 function places() {
   $('#places').innerHTML = P.places.map((p, i) => `<div class="place" data-i="${i}">
-    <select data-f="label">${['Uni', 'Work', 'Other'].map((l) => `<option ${p.label === l ? 'selected' : ''}>${l}</option>`).join('')}</select>
-    <select data-f="name">${Object.keys(PLACES).map((n) => `<option ${p.name === n ? 'selected' : ''}>${n}</option>`).join('')}</select>
-    <div class="step"><button data-d="-1" aria-label="Fewer days">&minus;</button><b class="num">${p.days}d</b><button data-d="1" aria-label="More days">+</button></div>
-    <button class="x" data-rm aria-label="Remove">&times;</button></div>`).join('') || '<p class="hint">No places yet.</p>';
+    <div class="pills kind" role="radiogroup" aria-label="Kind of place">${KINDS.map((k) => `<button type="button" role="radio" data-k="${k}" class="${p.label === k ? 'on' : ''}" aria-checked="${p.label === k}">${k}</button>`).join('')}</div>
+    <input data-f="name" list="pl-${KINDS.includes(p.label) ? p.label : 'Other'}" value="${esc(p.name)}" spellcheck="false" autocomplete="off"
+      placeholder="${p.label === 'Work' ? 'Work address, e.g. 1 Epping Road, North Ryde' : p.label === 'Uni' ? 'Pick a uni or type an address' : 'Any address'}">
+    <div class="step"><button type="button" data-d="-1" aria-label="Fewer days">&minus;</button><b class="num">${p.days}d</b><button type="button" data-d="1" aria-label="More days">+</button></div>
+    <button type="button" class="x" data-rm aria-label="Remove">&times;</button>
+    ${whereLine(p, i)}</div>`).join('') || '<p class="hint">No places yet.</p>';
 }
-$('#places').onchange = (e) => {
-  const row = e.target.closest('.place'); const p = P.places[+row.dataset.i];
-  p[e.target.dataset.f] = e.target.value;
-  if (e.target.dataset.f === 'name') [p.lat, p.lng] = PLACES[p.name];
-  save();
-};
+// Find a typed address. Sydney first, then anywhere in Australia.
+async function findAddress(q) {
+  const ask = async (text) => {
+    const u = 'https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=au&limit=1&addressdetails=0&q=' + encodeURIComponent(text);
+    const r = await fetch(u, { headers: { 'Accept-Language': 'en-AU' } });
+    return r.ok ? (await r.json())[0] : null;
+  };
+  const hit = (/\b(NSW|New South Wales|VIC|QLD|SA|WA|TAS|ACT|NT)\b/i.test(q) ? null : await ask(q + ', NSW')) || (await ask(q));
+  if (!hit) return null;
+  const short = hit.display_name.split(',').map((x) => x.trim()).filter((x) => !/^(Sydney|New South Wales|Australia|\d{4})$/.test(x)).slice(0, 3).join(', ').replace(/^(\d+[a-z]?), /i, '$1 ');
+  return { lat: +hit.lat, lng: +hit.lon, address: short };
+}
+async function setPlace(i, raw) {
+  const p = P.places[i], name = raw.trim();
+  if (name === p.name && p.lat) return;
+  p.name = name; p.lat = p.lng = null; p.address = '';
+  if (!name) { delete status[i]; places(); save(); return; }
+  if (PLACES[name]) { [p.lat, p.lng] = PLACES[name]; delete status[i]; places(); save(); return; }
+  status[i] = { text: 'Finding the address…', kind: '' }; places();
+  try {
+    const f = await findAddress(name);
+    if (P.places[i] !== p || p.name !== name) return;      // changed again while we looked
+    if (f) Object.assign(p, f);
+  } catch {}
+  delete status[i]; places(); save();
+}
+$('#places').addEventListener('change', (e) => {
+  const row = e.target.closest('.place'); if (!row || e.target.dataset.f !== 'name') return;
+  setPlace(+row.dataset.i, e.target.value);
+});
+$('#places').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset.f === 'name') e.target.blur(); });
 $('#places').onclick = (e) => {
   const row = e.target.closest('.place'); if (!row) return;
-  const i = +row.dataset.i;
-  if (e.target.closest('[data-rm]')) P.places.splice(i, 1);
-  const d = e.target.closest('[data-d]'); if (d) P.places[i].days = Math.max(1, Math.min(7, P.places[i].days + +d.dataset.d));
-  places(); save();
+  const i = +row.dataset.i, p = P.places[i];
+  const k = e.target.closest('[data-k]');
+  if (k) {
+    if (p.label === k.dataset.k) return;
+    p.label = k.dataset.k;
+    // A uni left over from the default doesn't belong under Work: clear it so you can type the address.
+    if (p.label === 'Work' && UNIS.includes(p.name)) { p.name = ''; p.lat = p.lng = null; p.address = ''; }
+    places(); save();
+    if (!p.name) $('#places').querySelector(`.place[data-i="${i}"] input`)?.focus();
+    return;
+  }
+  if (e.target.closest('[data-rm]')) { P.places.splice(i, 1); for (const key in status) delete status[key]; }
+  const d = e.target.closest('[data-d]'); if (d) p.days = Math.max(1, Math.min(7, p.days + +d.dataset.d));
+  if (e.target.closest('[data-rm], [data-d]')) { places(); save(); }
 };
-$('#addPlace').onclick = () => { const n = 'UNSW Kensington'; P.places.push({ label: 'Uni', name: n, lat: PLACES[n][0], lng: PLACES[n][1], days: 3 }); places(); save(); };
+$('#addPlace').onclick = () => {
+  const has = (l) => P.places.some((p) => p.label === l);
+  const label = !has('Uni') ? 'Uni' : !has('Work') ? 'Work' : 'Other';
+  const n = label === 'Uni' ? 'UNSW Kensington' : '';
+  P.places.push({ label, name: n, lat: n ? PLACES[n][0] : null, lng: n ? PLACES[n][1] : null, days: 3 });
+  places(); save();
+  if (!n) $('#places .place:last-child input')?.focus();
+};
 places();
-
-// ---------- Renter ID ----------
-const R = P.renterId;
-$('#job').value = R.job; $('#employer').value = R.employer;
-$('#job').oninput = (e) => { R.job = e.target.value; save(); drawId(); };
-$('#employer').oninput = (e) => { R.employer = e.target.value; save(); drawId(); };
-$('#share').value = R.incomeShare;
-const share = () => ($('#shareOut').textContent = R.incomeShare + '%');
-$('#share').oninput = (e) => { R.incomeShare = +e.target.value; share(); save(); drawId(); };
-share();
-const points = () => DOCS.reduce((n, [k, , p]) => n + (R.documents[k] ? p : 0), 0);
-function docs() {
-  $('#docs').innerHTML = DOCS.map(([k, label, p]) => `<label class="doc toggle"><span>${label}${p ? `<em>${p} pts</em>` : ''}</span><input type="checkbox" data-doc="${k}" ${R.documents[k] ? 'checked' : ''}><i></i></label>`).join('');
-  $('#points').textContent = Math.min(100, points()) + ' / 100 pts';
-}
-$('#docs').onchange = (e) => { R.documents[e.target.dataset.doc] = e.target.checked; docs(); save(); drawId(); };
-docs();
-function refs() {
-  $('#refs').innerHTML = R.references.map((r, i) => `<div class="ref" data-i="${i}"><input data-f="name" value="${r.name || ''}" placeholder="Name"><input data-f="relation" value="${r.relation || ''}" placeholder="Past landlord, employer"><button class="x" data-rm aria-label="Remove">&times;</button></div>`).join('') || '<p class="hint">Past landlords or employers who can vouch for you.</p>';
-}
-$('#refs').oninput = (e) => { const i = +e.target.closest('.ref').dataset.i; R.references[i][e.target.dataset.f] = e.target.value; save(); };
-$('#refs').onclick = (e) => { if (e.target.closest('[data-rm]')) { R.references.splice(+e.target.closest('.ref').dataset.i, 1); refs(); save(); drawId(); } };
-$('#addRef').onclick = () => { R.references.push({ name: '', relation: '' }); refs(); save(); drawId(); };
-refs();
-function drawId() {
-  const pts = Math.min(100, points());
-  $('#idcard').innerHTML = `<div><div class="k">Renter ID</div><div class="nm">${(P.name || 'Your name').replace(/</g, '')}</div></div>
-    <div class="meta"><div><span class="k">Role</span><b>${(R.job || '—').replace(/</g, '')}</b></div><div><span class="k">Rent share</span><b>${R.incomeShare}%</b></div><div><span class="k">References</span><b>${R.references.length}</b></div></div>
-    <div><div class="k" style="display:flex;justify-content:space-between"><span>ID points</span><span>${pts} / 100</span></div><div class="bar100"><i style="width:${pts}%"></i></div></div>`;
-}
-drawId();
 
 // ---------- Data ----------
 { const el = $('#rentModelUrl'); el.value = S.rentModelUrl ?? ''; el.oninput = () => { S.rentModelUrl = el.value.trim(); save(); }; }
@@ -164,9 +191,15 @@ $('#csv').onchange = async (e) => {
 };
 chrome.storage.local.get('rentcsv').then(({ rentcsv }) => { if (rentcsv) { $('#csvStatus').textContent = Object.keys(rentcsv).length.toLocaleString() + ' homes loaded'; $('#csvStatus').className = 'status ok'; } });
 
-$('#demo').onclick = () => chrome.tabs.create({ url: 'https://www.domain.com.au/rent/bondi-nsw-2026/?ptype=apartment-unit-flat' });
-// Real homes for sale in Bondi, a suburb the free Microburbs key covers. Open any one and Lumo switches to Investor mode.
-$('#demoSale').onclick = () => chrome.tabs.create({ url: 'https://www.domain.com.au/sale/bondi-nsw-2026/' });
+// Real listings in a suburb the Microburbs key covers: Surry Hills with a hackathon key, Bondi with the sandbox.
+// Open any home for sale and Lumo switches to Investor mode.
+loadEnv().then((env) => {
+  const a = demoArea(env);
+  $('#demo').textContent = `Try it on real ${a.name} rentals`;
+  $('#demoSale span').textContent = `${a.name} homes for sale`;
+  $('#demo').onclick = () => chrome.tabs.create({ url: `https://www.domain.com.au/rent/${a.slug}/?ptype=apartment-unit-flat` });
+  $('#demoSale').onclick = () => chrome.tabs.create({ url: `https://www.domain.com.au/sale/${a.slug}/` });
+});
 $('#offline').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/listing.html') });
 $('#offlineSale').onclick = () => chrome.tabs.create({ url: chrome.runtime.getURL('demo/sale.html') });
 

@@ -3,7 +3,40 @@
 import { cached } from './store.js';
 import { investFacts } from './invest.js';
 
-const MB = 'https://api.microburbs.com.au/v1';
+// Two Microburbs hosts. The hackathon key (ht26_...) works on api-ht and covers the City of Sydney's
+// 29 suburbs; anything outside returns 403. The public host takes 'test' (the free sandbox: Bondi,
+// Belmont North and a few others) or a full key. MICROBURBS_BASE in lumo/.env overrides the choice.
+const MB_PUBLIC = 'https://api.microburbs.com.au/v1';
+const MB_HACK = 'https://api-ht.microburbs.com.au/v1';
+export function mbBase(key, base) {
+  if (base) { const b = String(base).trim().replace(/\/+$/, ''); return /\/v1$/.test(b) ? b : b + '/v1'; }
+  return /^ht\d*_/.test(key || '') ? MB_HACK : MB_PUBLIC;
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// The hackathon key allows about 10 requests a second. Every Microburbs call in the worker waits
+// for a slot so a listing (30-odd calls at once) never trips the limit.
+const RATE = 8, stamps = [];
+async function slot() {
+  for (;;) {
+    const now = Date.now();
+    while (stamps.length && now - stamps[0] >= 1000) stamps.shift();
+    if (stamps.length < RATE) { stamps.push(now); return; }
+    await sleep(1000 - (now - stamps[0]) + 5);
+  }
+}
+// One call, retried on 429 (rate limit) and 5xx: waits Retry-After, or 0.6 s, 1.2 s, 2.4 s.
+async function mbFetch(base, key, path) {
+  for (let i = 0; ; i++) {
+    await slot();
+    const res = await fetch(base + path, { headers: { Authorization: 'Bearer ' + (key || 'test') }, signal: AbortSignal.timeout(9000) });
+    if ((res.status === 429 || res.status >= 500) && i < 3) {
+      const ra = Number(res.headers.get('retry-after'));
+      await sleep(Number.isFinite(ra) && ra > 0 ? Math.min(ra, 5) * 1000 : 600 * 2 ** i);
+      continue;
+    }
+    return res;
+  }
+}
 
 // ---------- helpers ----------
 export function metres(a, b) {
@@ -23,12 +56,16 @@ const median = (xs) => {
 
 // ---------- Microburbs ----------
 // snap: a saved copy of answers (demo listings only). Used when the live call fails, so the demo works offline.
-function microburbs(key, snap) {
+// base: from mbBase(). Outside the hackathon key's area (a 403), the same call goes to the free sandbox,
+// so Bondi and the demo suburbs still answer.
+function microburbs(key, snap, base = mbBase(key)) {
   const get = async (path, days = 7) => {
     try {
       return await cached('mb:' + path, days, async () => {
-        const res = await fetch(MB + path, { headers: { Authorization: 'Bearer ' + (key || 'test') }, signal: AbortSignal.timeout(9000) });
+        let res = await mbFetch(base, key, path);
+        if (res.status === 403 && base !== MB_PUBLIC) res = await mbFetch(MB_PUBLIC, 'test', path);
         if (!res.ok) throw new Error('Microburbs ' + res.status + ' ' + path);
+        // No data is still a 200: { data: null, available: false, reason }. null isn't cached.
         return (await res.json()).data;
       });
     } catch (e) {
@@ -526,7 +563,7 @@ export async function gatherFacts(L, S, profile) {
     L.sample === false ? null : tryIt('sample', async () => (await fetch(chrome.runtime.getURL('demo/facts.json'))).json())
   ]) : Promise.resolve([null, null]);
   const snapFirst = L.demo ? (await demoP)[0] : null;
-  const mb = microburbs(S.microburbsKey, snapFirst);
+  const mb = microburbs(S.microburbsKey, snapFirst, mbBase(S.microburbsKey, S.microburbsBase));
 
   // 1. Microburbs: suburb data, and property data when the address resolves.
   const mbP = (async () => {

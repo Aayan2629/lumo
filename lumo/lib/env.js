@@ -37,11 +37,18 @@ export function loadEnv() {
 export function envSettings(env) {
   return {
     microburbsKey: env.MICROBURBS_KEY || 'test',
+    microburbsBase: env.MICROBURBS_BASE || '',
     googleKey: env.GOOGLE_MAPS_KEY || '',
     tfnswKey: env.TFNSW_KEY || '',
     mapillaryToken: env.MAPILLARY_TOKEN || ''
   };
 }
 
+// Where 'Try it' sends you: Surry Hills (City of Sydney) with a hackathon key, Bondi with the free sandbox.
+export function demoArea(env) {
+  return /^ht\d*_/.test(env.MICROBURBS_KEY || '') || /api-ht\./.test(env.MICROBURBS_BASE || '')
+    ? { name: 'Surry Hills', slug: 'surry-hills-nsw-2010' } : { name: 'Bondi', slug: 'bondi-nsw-2026' };
+}
+
 // Every variable the settings page reports on.
-export const ENV_KEYS = ['LLM_API_KEY', 'LLM_MODEL', 'LLM_ENDPOINT', 'MICROBURBS_KEY', 'GOOGLE_MAPS_KEY', 'TFNSW_KEY', 'MAPILLARY_TOKEN'];
+export const ENV_KEYS = ['LLM_API_KEY', 'LLM_MODEL', 'LLM_ENDPOINT', 'MICROBURBS_KEY', 'MICROBURBS_BASE', 'GOOGLE_MAPS_KEY', 'TFNSW_KEY', 'MAPILLARY_TOKEN'];

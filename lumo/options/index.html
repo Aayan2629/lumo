@@ -19,7 +19,6 @@
     <span class="thumb"></span>
     <button role="tab" data-tab="you" aria-selected="true">You</button>
     <button role="tab" data-tab="places">Places</button>
-    <button role="tab" data-tab="id">Renter ID</button>
     <button role="tab" data-tab="invest">Investor</button>
     <button role="tab" data-tab="data">Data</button>
   </nav>
@@ -57,28 +56,8 @@
     <div class="card glass">
       <p class="lead">Where you go each week. Lumo times every listing to these.</p>
       <div id="places"></div>
+      <datalist id="pl-Uni"></datalist><datalist id="pl-Work"></datalist><datalist id="pl-Other"></datalist>
       <button class="add" id="addPlace">Add a place</button>
-    </div>
-  </section>
-
-  <!-- Renter ID -->
-  <section class="tab" data-tab="id" hidden>
-    <div class="idcard" id="idcard"></div>
-    <div class="card glass">
-      <label class="field"><span>Job or course</span><input id="job" placeholder="Data Science student"></label>
-      <label class="field"><span>Employer or uni</span><input id="employer" placeholder="UNSW"></label>
-      <div class="field"><span>Rent as share of income</span><b class="num" id="shareOut"></b></div>
-      <input type="range" id="share" min="10" max="60" step="1">
-    </div>
-    <div class="card glass">
-      <div class="field"><span>Documents ready</span><b class="num" id="points"></b></div>
-      <div id="docs"></div>
-      <p class="hint">Mark what you have ready. Lumo doesn't upload files. Sharing with agents comes later.</p>
-    </div>
-    <div class="card glass">
-      <div class="field"><span>References</span></div>
-      <div id="refs"></div>
-      <button class="add" id="addRef">Add a reference</button>
     </div>
   </section>
 
@@ -106,7 +85,7 @@
     <div class="card glass">
       <div class="field"><span>Keys (from .env)</span></div>
       <div class="envkeys" id="envKeys"></div>
-      <p class="hint">Edit lumo/.env and reload the extension. Start from lumo/.env.example. MICROBURBS_KEY=test uses the free sandbox: Bondi and a few other suburbs only.</p>
+      <p class="hint">Edit lumo/.env and reload the extension. Start from lumo/.env.example. MICROBURBS_KEY=test uses the free sandbox: Bondi and a few other suburbs only. A hackathon key (ht26_...) covers the City of Sydney's 29 suburbs, with the sandbox outside them.</p>
     </div>
     <div class="card glass">
       <div class="field"><span>Your rent model</span><b class="status" id="csvStatus"></b></div>

@@ -1,5 +1,5 @@
 // Ask Lumo. Answers come from the LLM (see lib/ai.js) using the knowledge files, the listing and the checks.
-// With no LLM key in lumo/.env, every question gets "Insert key".
+// With no LLM key in lumo/.env, or when the model can't be reached, Lumo answers from its own checks (rules below).
 (() => {
   const M = LUMO.money;
 
@@ -49,12 +49,12 @@
     if (/strata|levy|levies|body corp/.test(s)) { const c = get('strata'); return c ? `${c.line} ${c.next}` : 'This is a house, so there are no strata levies.'; }
     if (/history|sold before|last sold|selling|why/.test(s)) { const c = get('history'); return c ? `${c.line} ${c.meaning}` : 'I have no sale history for this address.'; }
     if (/land|zon|develop|subdivid|granny|duplex/.test(s)) { const c = get('zoning') || get('land') || get('site'); return c ? `${c.line} ${c.meaning}` : 'I have no land or zoning data for this lot.'; }
-    if (/score/.test(s)) { const sc = LUMO.investScore(L, F, m); return sc.total != null ? `${sc.total} out of 100. ${sc.parts.map((p) => `${p.label} ${p.score}`).join(', ')}. It weighs price and rent return most. It is a way to compare homes, not advice.` : 'Not enough data for a score yet.'; }
+    if (/score|rating|out of (10|100)/.test(s)) return 'Lumo doesn\'t give homes a score. What matters is different for everyone, so it shows you the checks and the numbers and leaves the call to you. Open Numbers to try your own price, deposit and rate.';
     return null;
   }
 
   // Rule answers: match the question to what Lumo knows, answer in two or three sentences.
-  // Not called any more (LUMO.reply always asks the LLM). Kept as an offline backup. It never makes up a number.
+  // Used when there is no LLM key or the model can't be reached. It never makes up a number.
   function rules(q, D) {
     if (D.mode === 'invest') { const a = investAnswer(q, D); if (a) return a; }
     const { L, F, checks } = D, s = q.toLowerCase(), P = D.state.profile, S = F.sample || {};
@@ -171,11 +171,10 @@
     // Lumo's opening line and its notes aren't part of the conversation (and a model wants a user turn first).
     const history = chat.filter((m) => !m.opening && !m.note).map((m) => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text }));
     const r = await LUMO.send('ask', { ctx, history });
-    if (r?.noKey) return NO_KEY;
     if (r?.text) return r.text;
-    return NO_MODEL;
+    // No key, or the model didn't answer: answer from the checks on screen instead of a dead end.
+    return rules(q, D);
   };
-  // Replies that aren't answers (no "Save to notes" under them).
-  const NO_KEY = 'Insert key', NO_MODEL = "Lumo couldn't reach the model.";
-  LUMO.replyFallbacks = [NO_KEY, NO_MODEL];
+  // Replies that aren't answers (no "Save to notes" under them). Rule answers are real answers, so none.
+  LUMO.replyFallbacks = [];
 })();

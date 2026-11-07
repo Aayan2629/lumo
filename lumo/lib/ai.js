@@ -1,5 +1,5 @@
 // LLM answers (provider set on hackathon day). Lumo answers in its own words using the knowledge files,
-// the listing and the checks. Without an LLM key in lumo/.env, the page shows "Insert key".
+// the listing and the checks. Without an LLM key in lumo/.env, the page answers from its own checks (content/chat.js).
 
 let KB = null;
 async function knowledge() {

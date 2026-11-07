@@ -145,40 +145,6 @@
     };
   };
 
-  // ---------- The Lumo score ----------
-  // Five parts, each 0–100, from the data on screen. Not advice: a quick way to compare homes.
-  LUMO.investScore = (L, F, model) => {
-    const I = F.inv || {}, mk = I.market || {}, parts = [];
-    const push = (key, label, w, score, why) => { if (score != null && Number.isFinite(score)) parts.push({ key, label, w, score: Math.round(clamp(score, 0, 100)), why }); };
-    const v = I.value?.mid;
-    if (v && model?.price) {
-      const ask = L.sale?.kind === 'hidden' ? v : (L.sale?.price || model.price);
-      const r = Math.max(ask, model.price) / v;
-      push('value', 'Price', 25, lerp(r, [[0.95, 100], [1, 85], [1.05, 60], [1.1, 35], [1.2, 0]]), `${r <= 1 ? 'At or under' : Math.round((r - 1) * 100) + '% over'} what similar homes sold for`);
-    }
-    if (model?.net != null) push('yield', 'Rent return', 25, lerp(model.net * 100, [[0.5, 10], [1.5, 35], [2.5, 60], [3.5, 85], [4.5, 100]]), `${P1(model.net)} after costs, before the loan`);
-    const g = mk.growth;
-    const cagr = g?.['10yr'] != null ? Math.pow(1 + g['10yr'], 1 / 10) - 1 : g?.['5yr'] != null ? Math.pow(1 + g['5yr'], 1 / 5) - 1 : null;
-    if (cagr != null) push('growth', 'Growth', 20, lerp(cagr * 100, [[0, 10], [3, 45], [6, 80], [8, 100]]), `${P1(cagr)} a year over ${g['10yr'] != null ? 10 : 5} years in the suburb`);
-    let risk = 100; const why = [];
-    const fl = F.risks?.flood?.[0], bf = F.risks?.bushfire?.[0];
-    if (fl?.on_property) { risk -= 35; why.push('flood on the lot'); } else if ((F.suburbRisks?.flood?.coverage_pct || 0) > 10) { risk -= 8; why.push('flooding in the suburb'); }
-    if (bf?.on_property) { risk -= 15; why.push('bushfire-prone lot'); } else if (bf && bf.nearest_distance_m <= 100) { risk -= 8; why.push('bushfire land next door'); }
-    const cr = F.crime?.vs_national_pct;
-    if (cr >= 25) { risk -= 20; why.push('high crime'); } else if (cr >= 10) { risk -= 10; why.push('crime above average'); }
-    if (mk.monthsSupply > 6) { risk -= 10; why.push('lots for sale'); }
-    if (mk.investorShare > 60) { risk -= 10; why.push('mostly investors'); }
-    if ((I.supply1km?.dwellings || 0) >= 100) { risk -= 10; why.push('many new homes approved nearby'); }
-    push('risk', 'Risk', 20, risk, why.length ? 'Lower for ' + why.join(', ') : 'Nothing serious in the data');
-    if (mk.vacancy != null) push('demand', 'Tenant demand', 10, lerp(mk.vacancy * 100, [[1, 100], [2, 75], [3, 50], [5, 20]]), `${P1(mk.vacancy)} of rentals empty`);
-    const wsum = parts.reduce((s, p) => s + p.w, 0);
-    // A score needs the money side (price or rent return) and at least three parts. With only the risk
-    // part every home in a suburb got the same number (90 in Bondi), which says nothing.
-    const enough = parts.some((p) => p.key === 'value' || p.key === 'yield') && parts.length >= 3;
-    const total = wsum && enough ? Math.round(parts.reduce((s, p) => s + p.score * p.w, 0) / wsum) : null;
-    return { total, parts };
-  };
-
   // ---------- Checks ----------
   // Checks that mean the same for a buyer as for a renter, taken from the renter rules.
   const SHARED = ['quiet', 'transport', 'crime', 'flood', 'build', 'views', 'latenight', 'trees', 'photos', 'beach', 'cafes'];

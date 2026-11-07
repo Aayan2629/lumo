@@ -266,9 +266,9 @@
       add({
         id: 'commute-' + c.name, finding: 42, level: c.minutes <= 30 ? 'green' : c.minutes <= 50 ? 'info' : 'amber',
         title: `${real ? '' : 'About '}${c.minutes} min to ${c.name}`,
-        line: `${hrs} hours a week on ${c.days} days.${c.source === 'tfnsw' ? ` ${c.how}, leaving 8 am Monday.` : c.source === 'google' ? ' Transit, leaving 8 am Monday.' : ' Estimate from distance.'}`,
+        line: `${hrs} hours a week on ${c.days} day${c.days === 1 ? '' : 's'}.${c.source === 'tfnsw' ? ` ${c.how}, leaving 8 am Monday.` : c.source === 'google' ? ' Transit, leaving 8 am Monday.' : ' Estimate from distance.'}`,
         anchors: [], proof: { kind: 'commute', home: F.home, place: c },
-        meaning: c.minutes <= 30 ? 'An easy trip. You get time back every week.' : `That is ${Math.round(hrs * 45)} hours a year getting to ${c.label === 'Work' ? 'work' : 'uni'}.`,
+        meaning: c.minutes <= 30 ? 'An easy trip. You get time back every week.' : `That is ${Math.round(hrs * 45)} hours a year getting to ${c.label === 'Work' ? 'work' : c.label === 'Uni' ? 'uni' : c.name}.`,
         next: 'Open the trip in Google Maps to see the exact route.',
         questions: ['How long is my commute?', 'Is there a night bus home?'], sources: [c.source === 'tfnsw' ? 'Transport for NSW' : c.source === 'google' ? 'Google Maps' : 'Lumo estimate']
       });

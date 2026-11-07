@@ -725,18 +725,9 @@
   const invSet = () => ({ ...LUMO.investDefaults, ...(D.state.profile.invest || {}) });
   const invModel = (o = {}) => LUMO.investModel(D.L, D.F, D.state.profile, { ...(numPrice ? { price: numPrice } : {}), ...o });
 
-  // Score ring: one number out of 100, drawn as a ring that fills in.
-  function ring(score) {
-    const r = 25, c = 2 * Math.PI * r, lv = score >= 70 ? 'green' : score >= 50 ? 'amber' : 'red';
-    return `<div class="ring ${lv}" role="img" aria-label="Lumo score ${score} out of 100"><svg viewBox="0 0 64 64" width="64" height="64">
-      <circle cx="32" cy="32" r="${r}" class="ring-bg"/><circle cx="32" cy="32" r="${r}" class="ring-fg${D.ringShown ? ' still' : ''}" style="--c-len:${c.toFixed(1)};--c-off:${(c * (1 - score / 100)).toFixed(1)}"/></svg>
-      <b class="num">${score}</b><small>score</small></div>`;
-  }
-
   function investHero() {
     const { L, F, checks } = D;
     const model = invModel(), V = F.inv?.value || {};
-    const sc = LUMO.investScore(L, F, model);
     const n = LUMO.counts(checks);
     const lv = n.red ? 'red' : n.amber ? 'amber' : 'green';
     const top = checks.filter((c) => (c.level === 'red' || c.level === 'amber') && !c.dup).slice(0, 2).map((c) => c.title.toLowerCase());
@@ -760,9 +751,8 @@
         <div class="mlabels under">${[[V.mid, 'Value'], ask && [ask, L.sale.kind === 'fixed' ? 'Asks' : 'Guide']].filter(Boolean).sort((a, b) => a[0] - b[0]).map(([v, t2], i, arr) => `<span style="--x:${arr.length > 1 && Math.abs(x(arr[0][0]) - x(arr[1][0])) < 30 ? (i ? 100 : 0) : x(v)}%">${t2} <b class="num">${SH(v)}</b></span>`).join('')}</div></div>`;
     }
     const links = `<div class="links"><a class="link" href="${E(gmaps(L))}" target="_blank" rel="noopener">${G()}Google Maps</a>${L.lat ? `<a class="link" href="${E(street(L))}" target="_blank" rel="noopener">${I('street', 14)}Street View</a>` : ''}<button class="link" data-goto="numbers">${I('chart', 14)}Numbers</button></div>`;
-    setTimeout(() => { if (D) D.ringShown = true; }, 1300);   // the ring fills in once, not on every tab switch
     return `<div class="hero ihero ${lv}">
-      <div class="ihead">${sc.total != null ? ring(sc.total) : ''}<div class="verdict">${E(n.red ? `${n.red} red flag${n.red > 1 ? 's' : ''} in the ad` : LUMO.verdict(checks))}<span class="sub">${E(sub)}</span></div></div>
+      <div class="ihead"><div class="verdict">${E(n.red ? `${n.red} red flag${n.red > 1 ? 's' : ''} in the ad` : LUMO.verdict(checks))}<span class="sub">${E(sub)}</span></div></div>
       ${tiles}${vm}${links}</div>`;
   }
 
@@ -797,7 +787,6 @@
     const m = invModel();
     if (!m) return `<div class="view empty"><div><b>No price to work with</b>Lumo needs a price or a value for this home.</div></div>`;
     const s = m.set, base = LUMO.investModel(D.L, D.F, D.state.profile).price;
-    const sc = LUMO.investScore(D.L, D.F, m);
     const lo = Math.round((base * 0.7) / 5000) * 5000, hi = Math.round((base * 1.3) / 5000) * 5000;
     return `<div class="view nums">
       <div class="card cashcard">
@@ -814,7 +803,6 @@
       </div>
       <div class="card"><div class="label">Return</div><div class="rets" data-o="rets">${retsHTML(m)}</div></div>
       <div class="card"><div data-o="upfront">${cashView(m, true)}</div></div>
-      ${sc.total != null ? `<div class="card"><div class="label">Lumo score <b class="num" data-o="score">${sc.total}</b></div><div class="parts" data-o="parts">${partsHTML(sc)}</div></div>` : ''}
       ${D.F.inv?.market?.growth ? `<div class="card">${growthView({ g: D.F.inv.market.growth, forecast: D.F.inv.market.forecast, mt: D.F.inv.mt, sub: D.F.suburb || D.L.suburb || 'Suburb' })}</div>` : ''}
       <p class="src">Estimates from the data shown, with typical costs where the ad gives none. Not financial advice. Stamp duty at NSW 2026–27 rates.</p>
     </div>`;
@@ -823,9 +811,6 @@
     const sy = D.F.inv?.market?.yield;
     const items = [['Gross yield', m.gross], ['After costs', m.net], sy && ['Suburb gross', sy]].filter(Boolean);
     return items.map(([k, v]) => `<div><span>${k}</span><b class="num">${v != null ? LUMO.pct(v) : '—'}</b></div>`).join('');
-  }
-  function partsHTML(sc) {
-    return sc.parts.map((p) => `<div class="part ${p.score >= 70 ? 'green' : p.score >= 45 ? 'amber' : 'red'}"><span>${E(p.label)}<small>${E(p.why)}</small></span><i style="--w:${p.score}%"></i><b class="num">${p.score}</b></div>`).join('');
   }
   function wireNumbers() {
     const root2 = panel.querySelector('.nums');
@@ -846,8 +831,6 @@
       out('flow').innerHTML = flowRows(m);
       out('rets').innerHTML = retsHTML(m);
       out('upfront').innerHTML = cashView(m, true);
-      const sc = LUMO.investScore(D.L, D.F, m);
-      if (out('score')) { out('score').textContent = sc.total; out('parts').innerHTML = partsHTML(sc); }
       const tile = panel.querySelector('[data-o="tileWeekly"]');
       if (tile && m.rent) { tile.className = 'kt ' + (m.weekly >= 0 ? 'pos' : 'neg'); tile.querySelector('b').textContent = signed(Math.round(m.weekly)); }
     };
