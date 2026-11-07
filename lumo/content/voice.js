@@ -1,4 +1,5 @@
-// Voice input: speak a question and it is typed into the chat box. Nothing is sent until you press Enter.
+// Voice input: speak a question and it is typed into the chat box (or the note box, on a notes screen).
+// Nothing is sent until you press Enter.
 //
 //  ⌥1 (hold)  push to talk: the mic is on while the keys are held.
 //  ⌥2 (tap)   toggle: tap to start, tap again to stop. It never stops by itself after a pause.
@@ -27,6 +28,7 @@
   // ---------- state ----------
   // idle -> starting (opening the panel, loading the frame) -> listening -> stopping (waiting for the last words) -> idle
   let state = 'idle', mode = null, base = '', text = '';
+  let target = null;                          // which box the words go into: 'INPUT' (chat) or 'TEXTAREA' (notes)
   let gen = 0;                                // bumped whenever a start is called off
   let stopTimer = 0;
 
@@ -77,24 +79,30 @@
   }
 
   // ---------- the chat box ----------
+  // The box we started in, or null if it was closed or swapped for another kind (chat <-> notes).
+  function box() {
+    const c = LUMO.ui.composer();
+    return c && (state === 'idle' || !target || c.input.tagName === target) ? c : null;
+  }
   // The words go after whatever was already in the box when listening started.
   function write() {
-    const c = LUMO.ui.composer();
+    const c = box();
     if (!c) return;
     c.input.value = base + (base && text && !/\s$/.test(base) ? ' ' : '') + text;
     c.send.disabled = !c.input.value.trim();
     c.input.focus({ preventScroll: true });
     const end = c.input.value.length;
     c.input.setSelectionRange(end, end);
-    c.input.scrollLeft = c.input.scrollWidth;
+    if (c.input.tagName === 'TEXTAREA') { c.input._grow?.(); c.input.scrollTop = c.input.scrollHeight; }
+    else c.input.scrollLeft = c.input.scrollWidth;
   }
   // Show the listening state on the mic button and the box. Called after every panel render too.
   function paint() {
-    const c = LUMO.ui.composer();
+    const c = box();
     const on = state === 'listening' || state === 'starting';
-    if (!c) { if (state === 'listening') stop(); return; }   // the chat was closed or left: stop listening
+    if (!c) { if (state === 'listening') stop(); return; }   // the box was closed or left: stop listening
     c.form.classList.toggle('live', on);
-    c.input.placeholder = on ? 'Listening…' : PLACEHOLDER;
+    c.input.placeholder = on ? 'Listening…' : c.input.dataset.ph || PLACEHOLDER;
     if (c.mic) {
       c.mic.classList.toggle('live', on);
       c.mic.setAttribute('aria-pressed', String(on));
@@ -106,7 +114,8 @@
     const was = state;
     state = 'idle'; mode = null;
     paint();
-    if (was !== 'idle') LUMO.ui.composer()?.input.focus({ preventScroll: true });
+    if (was !== 'idle') box()?.input.focus({ preventScroll: true });
+    target = null;
   }
 
   // ---------- start and stop ----------
@@ -116,13 +125,14 @@
     // so only claim the "starting" state afterwards.
     if (!LUMO.ensureStarted()) { LUMO.ui.note('Open a listing and ask Lumo'); return; }   // not a listing
     const g = ++gen;
-    state = 'starting'; mode = m; text = '';
-    LUMO.ui.openChat();
+    state = 'starting'; mode = m; text = ''; target = null;
+    LUMO.ui.openComposer();
     // The panel may still be mounting (the scan only just started). Wait for the chat box, up to about a second.
     let c = LUMO.ui.composer();
     for (let i = 0; !c && i < 60 && g === gen; i++) { await new Promise((r) => requestAnimationFrame(r)); c = LUMO.ui.composer(); }
     if (g !== gen) return;
     if (!c) { state = 'idle'; mode = null; return; }
+    target = c.input.tagName;
     paint();
     // First time: approve the mic once for Lumo in its own tab.
     const { micGranted } = await chrome.storage.local.get('micGranted');

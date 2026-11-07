@@ -18,6 +18,12 @@ var LUMO = (globalThis.LUMO = globalThis.LUMO || {});
   LUMO.dist = (m) => (m < 1000 ? m + ' m' : (m / 1000).toFixed(1) + ' km');
   LUMO.walk = (m) => Math.max(1, Math.round((m * 1.3) / 80));
   LUMO.esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Notes are kept per home, keyed by the listing's address: no query, no hash, no trailing slash.
+  // Same logic as noteKey in lib/store.js.
+  LUMO.noteKey = (url) => {
+    try { const u = new URL(url); return (u.protocol + '//' + u.host + u.pathname).replace(/\/+$/, ''); }
+    catch { return String(url || '').split(/[?#]/)[0].replace(/\/+$/, ''); }
+  };
   LUMO.reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Brand fallback font. On a Mac the panel uses SF Pro; elsewhere Schibsted Grotesk.
@@ -60,7 +66,9 @@ var LUMO = (globalThis.LUMO = globalThis.LUMO || {});
     eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6"/>',
     map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/>',
     street: '<circle cx="12" cy="5" r="2"/><path d="M12 8v6M12 14l-3 7M12 14l3 7M8 11h8"/>',
-    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'
+    chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    pencil: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',
+    trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/>'
   };
   LUMO.icon = (n, s = 16) => `<svg class="ic" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n] || ''}</svg>`;
 })();

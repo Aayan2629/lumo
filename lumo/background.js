@@ -1,6 +1,6 @@
 // Lumo service worker. The page talks to it with chrome.runtime.sendMessage.
 // It reads the API keys from lumo/.env, calls the data sources, and never exposes keys to the page.
-import { getAll } from './lib/store.js';
+import { getAll, noteKey } from './lib/store.js';
 import { gatherFacts } from './lib/providers.js';
 import { askLLM, knowledge } from './lib/ai.js';
 import { loadEnv, envSettings } from './lib/env.js';
@@ -32,6 +32,23 @@ chrome.action.onClicked.addListener(async (tab) => {
   chrome.tabs.create({ url: 'https://www.domain.com.au/rent/bondi-nsw-2026/?ptype=apartment-unit-flat' });
 });
 
+// Notes: every change reads, edits and writes the whole map, one at a time, so two quick writes
+// (or two tabs) can't overwrite each other. Each handler returns the new map.
+const NOTE_MAX = 2000;
+let noteQueue = Promise.resolve();
+const serial = (fn) => (noteQueue = noteQueue.then(fn, fn));
+const noteId = () => 'n_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const cleanText = (t) => String(t || '').trim().slice(0, NOTE_MAX);
+const cleanHome = (h) => h && { address: String(h.address || ''), photo: String(h.photo || ''), price: h.price == null || !Number.isFinite(+h.price) ? null : +h.price, sale: !!h.sale };
+function changeNotes(fn) {
+  return serial(async () => {
+    const { notes, saved } = await getAll();
+    fn(notes, saved);
+    await chrome.storage.local.set({ notes });
+    return notes;
+  });
+}
+
 const handlers = {
   async state() { return getAll(); },
   async knowledge() { return knowledge(); },
@@ -54,6 +71,41 @@ const handlers = {
     await chrome.storage.local.set({ saved: next });
     return next;
   },
+  async addNote({ url, home, text, by }) {
+    const t = cleanText(text);
+    if (!url || !t) throw new Error('empty note');
+    return changeNotes((notes, saved) => {
+      const key = noteKey(url), now = Date.now();
+      const r = notes[key] || { key, url, home: null, t: now, entries: [] };
+      // On the listing itself: refresh the snapshot. Otherwise keep it, or copy it from Saved if there is none.
+      if (home) { r.home = cleanHome(home); r.url = url; }
+      if (!r.home) {
+        const s = saved.find((x) => noteKey(x.url) === key);
+        r.home = cleanHome(s || { address: '' });
+      }
+      r.entries.unshift({ id: noteId(), text: t, t: now, ...(by === 'lumo' ? { by: 'lumo' } : {}) });
+      r.t = now;
+      notes[key] = r;
+    });
+  },
+  async editNote({ key, id, text }) {
+    const t = cleanText(text);
+    if (!t) throw new Error('empty note');
+    return changeNotes((notes) => {
+      const r = notes[key], e = r?.entries.find((x) => x.id === id);
+      if (!e) return;
+      e.text = t; e.edited = r.t = Date.now();
+    });
+  },
+  async removeNote({ key, id }) {
+    return changeNotes((notes) => {
+      const r = notes[key];
+      if (!r) return;
+      r.entries = r.entries.filter((x) => x.id !== id);
+      if (r.entries.length) r.t = Date.now(); else delete notes[key];
+    });
+  },
+  async removeHome({ key }) { return changeNotes((notes) => { delete notes[key]; }); },
   async openOptions() { chrome.runtime.openOptionsPage(); return true; },
   // Investor settings from the Numbers tab (deposit, rate, loan type). Kept for every home.
   async setInvest({ invest }) {

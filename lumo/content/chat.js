@@ -140,6 +140,24 @@
       (/park|car/.test(s) && has('parking')) || (/income|afford|census/.test(s) && has('census')) || null;
   };
 
+  // The user's notes: this home's, and every other noted home with a short summary. No size cap.
+  const noteDay = (t) => new Date(t).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/^(\w+),/, '$1');
+  function notesCtx(D) {
+    const notes = D.state.notes || {}, here = LUMO.noteKey(D.L.url);
+    const entriesFor = (key) => (notes[key]?.entries || []).map((e) => ({ when: noteDay(e.t), text: e.text, ...(e.by === 'lumo' ? { fromLumo: true } : {}) }));
+    return {
+      thisHome: entriesFor(here),
+      otherHomes: Object.values(notes)
+        .filter((r) => r.key !== here)
+        .sort((a, b) => b.t - a.t)
+        .map((r) => {
+          const s = (D.state.saved || []).find((x) => LUMO.noteKey(x.url) === r.key);
+          return { address: r.home?.address || s?.address || '', price: r.home?.price ?? s?.price ?? null, forSale: !!(r.home?.sale ?? s?.sale),
+            saved: !!s, checkCounts: s?.counts, notes: entriesFor(r.key) };
+        })
+    };
+  }
+
   LUMO.reply = async (q, D, chat) => {
     const ctx = {
       mode: D.mode,
@@ -147,13 +165,17 @@
       numbers: D.mode === 'invest' ? LUMO.investModel(D.L, D.F, D.state.profile) : undefined,
       listing: { address: D.L.address, price: D.L.price, priceText: D.L.priceText, forSale: D.mode === 'invest', beds: D.L.beds, baths: D.L.baths, parking: D.L.parking, type: D.L.type, description: (D.L.description || '').slice(0, 2500) },
       checks: D.checks.map(({ id, level, title, line, meaning, next, sources, sample }) => ({ id, level, title, line, meaning, next, sources, sample })),
-      facts: { ...D.F, sample: D.F.sample }
+      facts: { ...D.F, sample: D.F.sample },
+      notes: notesCtx(D)
     };
     // Lumo's opening line and its notes aren't part of the conversation (and a model wants a user turn first).
     const history = chat.filter((m) => !m.opening && !m.note).map((m) => ({ role: m.role === 'me' ? 'user' : 'assistant', content: m.text }));
     const r = await LUMO.send('ask', { ctx, history });
-    if (r?.noKey) return 'Insert key';
+    if (r?.noKey) return NO_KEY;
     if (r?.text) return r.text;
-    return "Lumo couldn't reach the model.";
+    return NO_MODEL;
   };
+  // Replies that aren't answers (no "Save to notes" under them).
+  const NO_KEY = 'Insert key', NO_MODEL = "Lumo couldn't reach the model.";
+  LUMO.replyFallbacks = [NO_KEY, NO_MODEL];
 })();
