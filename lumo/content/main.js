@@ -25,6 +25,9 @@
     // Open "Read more" first, so marks in the folded part of the ad can be seen.
     if (LUMO.pageKind() && LUMO.expandAd()) await new Promise((r) => setTimeout(r, 450));
     if (id !== run) return;
+    // Clicked here from search results: the page's data is still the search page's. Get this listing's own.
+    await LUMO.refreshDomain();
+    if (id !== run) return;
     const L = LUMO.extract();
     log('page', LUMO.pageKind() || 'not a listing', L ? { address: L.address, price: L.price, beds: L.beds, lat: L.lat, forSale: !L.rent } : '');
     if (!L) { if (fromClick) LUMO.ui.note('Open a listing and Lumo will check it'); return; }

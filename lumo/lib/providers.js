@@ -39,14 +39,35 @@ function microburbs(key, snap) {
   return {
     get,
     async sal(name, state) {
+      // The page can hand over { name, slug } instead of a name. Never send "[object Object]".
+      if (name && typeof name === 'object') name = name.name || '';
+      name = String(name || '').trim();
+      if (!name) return null;
+      if (typeof state !== 'string') state = '';
       const list = await get('/geocode/suburb?q=' + encodeURIComponent(name) + (state ? '&state=' + encodeURIComponent(state) : ''), 90);
       const n = name.toLowerCase();
       const hit = (list || []).find((x) => x.area_name.toLowerCase() === n) || (list || []).find((x) => x.area_name.toLowerCase().startsWith(n + ' ('));
       return hit ? hit.area_name : null;
     },
-    async gnaf(address) {
+    // Up to 10 candidates come back, ranked by text match. The top one can be the whole building or the
+    // unit next door, and its rent and sale history would then be someone else's. So only take a candidate
+    // whose street address is this one exactly (same unit, same number, same street). No exact match:
+    // return null, and gatherFacts finds the home in the suburb's listings instead.
+    async gnaf(address, suburb) {
       const list = await get('/geocode/address?address=' + encodeURIComponent(address), 90);
-      return list && list[0] ? list[0].id : null;
+      const loose = (k) => k.replace(/\b([a-z]*)0+(\d)/g, '$1$2');   // "G05/278" = "G5/278"
+      const want = loose(streetKey(address));
+      if (!want || !/\d/.test(want)) return null;
+      const sub = String(suburb || '').toLowerCase();
+      const hit = (list || []).find((c) => {
+        const names = [c.name, c.display_name, c.abbr].filter(Boolean);
+        const same = names.some((n) => loose(streetKey(n)) === want || loose(streetKey(n.replace(new RegExp('\\s+' + sub.replace(/[^a-z ]/g, '') + '$', 'i'), ''))) === want);
+        // Must END in this suburb: "Bondi" is not "Bondi Junction".
+        const subRe = new RegExp('(^|[,\\s])' + sub.replace(/[^a-z' -]/g, '') + '(\\s*,?\\s*(nsw|vic|qld|sa|wa|tas|act|nt))?(\\s*\\d{4})?\\s*$', 'i');
+        const inSuburb = !sub || names.some((n) => subRe.test(n.trim()));
+        return c.id && same && inSuburb;
+      });
+      return hit ? hit.id : null;
     }
   };
 }
@@ -510,7 +531,9 @@ export async function gatherFacts(L, S, profile) {
   // 1. Microburbs: suburb data, and property data when the address resolves.
   const mbP = (async () => {
     const sal = L.suburb ? await tryIt('suburb', () => mb.sal(L.suburb, L.state)) : null;
-    if (!L.gnaf && L.address && !L.demo) L.gnaf = await tryIt('address', () => mb.gnaf(L.address));
+    // Address lookup needs a real key (the free sandbox refuses it), so don't spend a call on it with 'test'.
+    const realKey = S.microburbsKey && S.microburbsKey !== 'test';
+    if (!L.gnaf && L.address && !L.demo && realKey) L.gnaf = await tryIt('address', () => mb.gnaf(L.address, sal || L.suburb));
     const S_ = sal ? encodeURIComponent(sal) : null;
     // No address match (the free key can't look addresses up): find this home in the suburb's own listings instead.
     if (!L.gnaf && S_ && L.address) {

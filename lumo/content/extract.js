@@ -38,18 +38,48 @@
     const title = rest.pop();
     if (LUMO.parseRent(title) && /week|pw|p\.w|month|pcm/i.test(title || '')) return true;
     if (rest.some((x) => /buy|sale|sold/i.test(x || ''))) return false;
-    return rest.some((x) => /rent|lease/i.test(x || '')) || !!LUMO.parseRent(title);
+    if (rest.some((x) => /rent|lease/i.test(x || '')) || LUMO.parseRent(title)) return true;
+    // Nothing says either way: let the tab title and the price line decide (see LUMO.extract).
+    return null;
   }
+
+  // ---------- Domain ----------
+  // Domain is a single-page app. Click a listing from the search results and the URL changes, but the
+  // page's data blob (__NEXT_DATA__) is still the SEARCH page's. Reading that as the listing made rentals
+  // open in Investor mode and sent Microburbs a suburb object instead of a name. So Lumo checks the blob
+  // is for this listing, and if not, fetches this listing's own page once to read its blob.
+  const domainId = () => (location.pathname.match(/-(\d{5,})\/?$/) || [])[1] || null;
+  const isThisListing = (cp, id) => !!(cp && id && cp.listingSummary && [cp.listingId, cp.id].some((x) => x != null && String(x) === id));
+  // listing id -> componentProps fetched from the listing's own page. Kept on LUMO, not in this closure:
+  // Chrome can add the scripts to a tab twice (on install, and from the manifest), and both copies must share it.
+  const fresh = (LUMO._fresh = LUMO._fresh || {});
+  function pageBlob() {
+    try { return JSON.parse($('#__NEXT_DATA__').textContent).props.pageProps.componentProps; } catch { return null; }
+  }
+  // Call before LUMO.extract(). Resolves once this listing's data is ready (instantly when the page already has it).
+  LUMO.refreshDomain = async () => {
+    const id = domainId();
+    if (LUMO.pageKind() !== 'domain' || !id || fresh[id] || isThisListing(pageBlob(), id)) return;
+    try {
+      const html = await (await fetch(location.href.split('#')[0], { credentials: 'include' })).text();
+      const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+      const cp = m && JSON.parse(m[1]).props.pageProps.componentProps;
+      if (isThisListing(cp, id)) fresh[id] = cp;
+    } catch (e) { console.info('[Lumo] could not read this listing\'s data', e); }
+  };
+  // Suburb can come as a name or as { name, slug } (the search page's shape). Lumo only wants the name.
+  const nameOf = (x) => (x && typeof x === 'object' ? x.name || x.suburb?.name || null : typeof x === 'string' ? x : null);
 
   function fromDomain() {
     try {
-      const cp = JSON.parse($('#__NEXT_DATA__').textContent).props.pageProps.componentProps;
+      const id = domainId();
+      const page = pageBlob();
+      const cp = isThisListing(page, id) ? page : fresh[id];
+      // No data for THIS listing: read the visible page instead of another page's data.
+      if (!cp) return null;
       const s = cp.listingSummary || {};
-      const h1 = text($('h1'));
-      // After in-app navigation the blob can be from the first page. Check it matches.
-      if (h1 && cp.street && !h1.toLowerCase().includes(String(cp.street).toLowerCase().split(' ')[0])) return null;
       return {
-        address: s.address, suburb: cp.suburb, state: cp.stateAbbreviation || cp.state || (s.address || '').match(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b/)?.[1], postcode: cp.postcode,
+        address: s.address, suburb: nameOf(cp.suburb), state: (cp.stateAbbreviation && String(cp.stateAbbreviation).toUpperCase()) || (s.address || '').match(/\b(NSW|VIC|QLD|SA|WA|TAS|ACT|NT)\b/)?.[1], postcode: cp.postcode,
         priceText: s.title, price: LUMO.parseRent(s.title), beds: s.beds, baths: s.baths, parking: s.parking,
         // Rent or buy: Domain's "mode" is the one to trust ("buy" or "rent"). Its listingType says "rent" even on
         // homes for sale, so it is only a fallback, and a weekly price settles it when neither is there.
@@ -172,7 +202,7 @@
     const desc = first(DESC) || biggestTextBlock();
     const L = {
       site: kind, url: location.href.split('#')[0], demo: kind === 'demo',
-      address: data.address || text($('h1')), suburb: data.suburb, state: data.state, postcode: data.postcode,
+      address: data.address || text($('h1')), suburb: nameOf(data.suburb), state: typeof data.state === 'string' ? data.state : null, postcode: data.postcode,
       price: data.price || LUMO.parseRent(text(priceEl)), priceText: data.priceText || text(priceEl),
       beds: data.beds, baths: data.baths, parking: data.parking, type: data.type,
       lat: data.lat, lng: data.lng, gnaf: data.gnaf,

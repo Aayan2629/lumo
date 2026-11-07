@@ -82,10 +82,41 @@ export async function askLLM(env, ctx, history) {
   return { text };
 }
 
-// TODO(hackathon): call the provider we're given. See to-do.md for sample request formats.
-// Must return the reply as a plain string.
+// Works out the provider from LLM_ENDPOINT, or from the key when no endpoint is set:
+// Anthropic (sk-ant-...), Google Gemini (AIza...), or anything OpenAI-compatible (OpenAI, Mistral, Groq, OpenRouter, ...).
+// Returns the reply as a plain string.
 async function callModel({ endpoint, model, key, system, messages, maxTokens }) {
-  throw new Error('callModel not implemented yet');
+  const ep = String(endpoint || '').trim();
+  const anthropic = /anthropic/i.test(ep) || (!ep && /^sk-ant-/.test(key));
+  const gemini = /generativelanguage/i.test(ep) || (!ep && /^AIza/.test(key));
+  // A model wants the conversation to start with a user turn.
+  const msgs = messages.filter((m, i) => m.content && (i > 0 || m.role === 'user'));
+  if (!msgs.length) throw new Error('nothing to ask');
+
+  if (anthropic) {
+    const url = ep ? (/\/messages\/?$/.test(ep) ? ep : ep.replace(/\/+$/, '') + (/\/v1$/.test(ep.replace(/\/+$/, '')) ? '' : '/v1') + '/messages') : 'https://api.anthropic.com/v1/messages';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: model || 'claude-haiku-4-5', max_tokens: maxTokens, system, messages: msgs })
+    });
+    if (!res.ok) throw new Error('LLM ' + res.status + ' ' + (await res.text()).slice(0, 200));
+    const j = await res.json();
+    return (j.content || []).map((b) => b.text || '').join('').trim();
+  }
+
+  // OpenAI-style chat completions. Gemini has an OpenAI-compatible endpoint too.
+  let url = ep || (gemini ? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' : 'https://api.openai.com/v1/chat/completions');
+  if (!/\/chat\/completions\/?$/.test(url)) url = url.replace(/\/+$/, '') + '/chat/completions';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key },
+    body: JSON.stringify({ model: model || (gemini ? 'gemini-2.5-flash' : 'gpt-4o-mini'), max_tokens: maxTokens, messages: [{ role: 'system', content: system }, ...msgs] })
+  });
+  if (!res.ok) throw new Error('LLM ' + res.status + ' ' + (await res.text()).slice(0, 200));
+  const j = await res.json();
+  const c = j.choices?.[0]?.message?.content;
+  return (Array.isArray(c) ? c.map((x) => x.text || '').join('') : c || '').trim();
 }
 
 export { knowledge };

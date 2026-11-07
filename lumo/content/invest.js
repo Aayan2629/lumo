@@ -172,7 +172,10 @@
     push('risk', 'Risk', 20, risk, why.length ? 'Lower for ' + why.join(', ') : 'Nothing serious in the data');
     if (mk.vacancy != null) push('demand', 'Tenant demand', 10, lerp(mk.vacancy * 100, [[1, 100], [2, 75], [3, 50], [5, 20]]), `${P1(mk.vacancy)} of rentals empty`);
     const wsum = parts.reduce((s, p) => s + p.w, 0);
-    const total = wsum ? Math.round(parts.reduce((s, p) => s + p.score * p.w, 0) / wsum) : null;
+    // A score needs the money side (price or rent return) and at least three parts. With only the risk
+    // part every home in a suburb got the same number (90 in Bondi), which says nothing.
+    const enough = parts.some((p) => p.key === 'value' || p.key === 'yield') && parts.length >= 3;
+    const total = wsum && enough ? Math.round(parts.reduce((s, p) => s + p.score * p.w, 0) / wsum) : null;
     return { total, parts };
   };
 
