@@ -295,6 +295,61 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .empty { padding: 40px 24px; text-align: center; color: var(--ink2); font-size: 13.5px; line-height: 1.5; display: grid; justify-items: center; gap: 14px; }
 .empty .heart { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
 .empty b { color: var(--ink); font-size: 15px; display: block; margin-bottom: 2px; }
+
+/* Notes */
+.pencil { position: relative; }
+.pencil .dotn { position: absolute; top: -3px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; display: grid; place-items: center; font-size: 10px; font-weight: 700; line-height: 1; color: #1c1c1e; background: #e8c77f; box-shadow: 0 0 0 2px var(--solid); }
+.seg.n5 button { font-size: 12.5px; }
+.seg.n5 .n { margin-left: 3px; min-width: 15px; height: 15px; padding: 0 4px; font-size: 10px; }
+.empty .heart.pen { color: #b98f4f; background: color-mix(in srgb, #c9a45c 16%, transparent); }
+.nhead .back { padding: 0 8px 10px 4px; }
+.nhome { display: flex; align-items: center; gap: 10px; padding: 0 6px 12px; }
+.nhome img, .nhome .ph, .nrow img, .nrow .ph { display: block; flex: none; object-fit: cover; background: linear-gradient(135deg, #2c2c30, #1c1c1e); }
+.nhome img, .nhome .ph { width: 36px; height: 36px; border-radius: 9px; }
+.nhome .t { flex: 1; min-width: 0; }
+.nhome .t b, .nhome .t span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nhome .t b { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+.nhome .t span { font-size: 12px; color: var(--ink2); margin-top: 1px; }
+.delall:hover { color: var(--red-ink); }
+.nlist { display: grid; gap: 8px; padding: 0 4px 4px; }
+.nentry { position: relative; padding: 10px 12px 11px; border-radius: 16px; background: var(--glass-hi); box-shadow: 0 0 0 .5px var(--hair), 0 4px 12px -8px rgba(0,0,0,.2); animation: in .3s var(--ease) both; }
+.nentry.lumo { background: color-mix(in srgb, #c9a45c 11%, var(--glass-hi)); }
+.nentry .when { display: flex; align-items: center; gap: 5px; padding-right: 26px; margin-bottom: 4px; font-size: 11.5px; color: var(--ink3); }
+.nentry .when .logo { width: 14px; height: 14px; flex: none; }
+.nentry .when b { color: var(--ink2); font-weight: 600; }
+.ntext { font-size: 14px; line-height: 1.42; white-space: pre-wrap; overflow-wrap: anywhere; cursor: text; border-radius: 6px; }
+.ntext:focus-visible { outline: 2px solid color-mix(in srgb, #c9a45c 70%, transparent); outline-offset: 2px; }
+.nentry .rm { position: absolute; top: 7px; right: 7px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; color: var(--ink2); background: var(--well); opacity: 0; transition: opacity .2s, color .2s; }
+.nentry:hover .rm, .nentry .rm:focus-visible { opacity: 1; }
+.nentry .rm:hover { color: var(--red-ink); }
+.nedit textarea { display: block; width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; padding: 7px 9px; border-radius: 10px; font: inherit; font-size: 14px; line-height: 1.42; color: var(--ink); background: var(--well); max-height: 240px; overflow-y: auto; scrollbar-width: thin; }
+.nedit .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.nedit .acts button { height: 28px; padding: 0 12px; border-radius: 14px; font-size: 12.5px; font-weight: 600; background: var(--well); }
+.nedit .acts .nsave { color: #fff; background: #1c1c1e; }
+.ui.dark .nedit .acts .nsave { color: #1c1c1e; background: #f5f5f7; }
+.nempty { padding: 28px 24px; text-align: center; font-size: 13.5px; line-height: 1.5; color: var(--ink2); }
+.composer.notec { align-items: flex-end; }
+.composer textarea { flex: 1; min-width: 0; box-sizing: border-box; height: 32px; max-height: 112px; padding: 6px 0; border: 0; outline: 0; resize: none; background: none; font: inherit; font-size: 14px; line-height: 20px; color: var(--ink); overflow-y: auto; scrollbar-width: thin; }
+.composer textarea::placeholder { color: var(--ink3); }
+.composer.live textarea::placeholder { color: var(--red-ink); }
+.nrows { display: grid; gap: 2px; }
+.nrow { width: 100%; display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 16px; text-align: left; transition: background .2s; }
+.nrow:hover { background: var(--well); }
+.nrow img, .nrow .ph { width: 48px; height: 48px; border-radius: 12px; }
+.nrow .meta { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.nrow .meta > * { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nrow .meta b { font-size: 14px; font-weight: 600; letter-spacing: -.01em; }
+.nrow .meta span { font-size: 12px; color: var(--ink2); }
+.nrow .meta .prev { color: var(--ink3); }
+/* Saved tile pill: bottom-left over the photo (the photo is 4:3, so 75% of the tile's width tall). */
+.sh .npill { position: absolute; left: 8px; top: 0; margin-top: calc(75% - 34px); display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(0,0,0,.4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); opacity: 0; transition: opacity .2s; }
+.sh:hover .npill, .sh .npill.has, .sh .npill:focus-visible { opacity: 1; }
+.toast { position: absolute; left: 50%; bottom: 74px; z-index: 5; max-width: calc(100% - 40px); padding: 9px 14px; border-radius: 18px; text-align: center; font-size: 12.5px; font-weight: 500; color: #fff; background: rgba(28,28,30,.9); box-shadow: 0 8px 24px -8px rgba(0,0,0,.4); animation: toastin .3s var(--ease) both; pointer-events: none; }
+.ui.dark .toast { color: #1c1c1e; background: rgba(245,245,247,.94); }
+@keyframes toastin { from { opacity: 0; transform: translate(-50%, 6px) } to { opacity: 1; transform: translate(-50%, 0) } }
+.savenote { display: inline-flex; align-items: center; gap: 5px; margin: 4px 0 0 28px; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--ink2); transition: background .2s, color .2s; }
+.savenote:hover:not(:disabled) { color: var(--ink); background: var(--well); }
+.savenote:disabled { cursor: default; color: var(--green-ink); }
 .foot { display: flex; gap: 6px; align-items: center; padding: 8px 12px 12px 16px; border-top: .5px solid var(--hair); flex: none; }
 .foot .srcs { display: flex; gap: 6px; flex-wrap: nowrap; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 82%, transparent); mask-image: linear-gradient(90deg, #000 82%, transparent); }
 .foot .srcs::-webkit-scrollbar { display: none; }

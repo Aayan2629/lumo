@@ -11,6 +11,17 @@ async function knowledge() {
   return KB;
 }
 
+// The user's own notes: on this home, and on every other home they noted. Same in both modes.
+function notesSection(ctx) {
+  return `
+The user's own notes on this home (things they were told or saw; treat them as what the user reports, not checked facts):
+${JSON.stringify(ctx.notes?.thisHome || [])}
+
+Other homes the user has notes on. For these you only have the user's notes and a short summary (price, saved check counts), not Lumo's full checks. Say so when it matters:
+${JSON.stringify(ctx.notes?.otherHomes || [])}
+`;
+}
+
 // Investor mode: the same rules, but for someone weighing up a home to buy and rent out.
 function investorPrompt(kb, ctx) {
   return `You are Lumo, a calm assistant that sits beside a property ad for sale in New South Wales and checks it for an investor.
@@ -19,6 +30,7 @@ Rules:
 - Use only the facts and numbers below. If something is missing, say what would prove it. Never invent numbers.
 - Say when a number is an estimate. You are not a financial adviser: give the facts, not a buy or sell recommendation.
 - Be fair to the listing: say what is good too.
+- If the user asks about another home, answer from their notes on it and say that is all you have.
 
 Listing as shown on the page:
 ${JSON.stringify(ctx.listing)}
@@ -28,6 +40,7 @@ ${JSON.stringify(ctx.numbers || {})}
 
 Checks Lumo already ran (red = problem, amber = worth checking, green = good sign, info = useful):
 ${JSON.stringify(ctx.checks)}
+${notesSection(ctx)}
 
 Raw facts (Microburbs market, valuation, sales, rentals, planning):
 ${JSON.stringify(ctx.facts).slice(0, 7000)}
@@ -48,6 +61,7 @@ Rules:
 - Say when a fact is sample data or an estimate.
 - You answer questions yourself. Do not tell the renter to ask the agent unless only the agent could know.
 - Be fair to the listing: say what is good too.
+- If the user asks about another home, answer from their notes on it and say that is all you have.
 
 Renter profile:
 ${JSON.stringify(ctx.profile)}
@@ -57,6 +71,7 @@ ${JSON.stringify(ctx.listing)}
 
 Checks Lumo already ran (level red = problem, amber = worth checking, green = good sign, grey = not checked yet):
 ${JSON.stringify(ctx.checks)}
+${notesSection(ctx)}
 
 Raw facts from data sources:
 ${JSON.stringify(ctx.facts).slice(0, 6000)}
