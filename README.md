@@ -21,6 +21,9 @@
 
 ![Lumo open beside an example rental listing](images/hero.jpg)
 
+> **New: the Lumo app.** Verified renters and investors swipe on homes, and agents get verified leads.
+> The pilot build lives in [`web/`](web/README.md). The Chrome extension below is unchanged.
+
 ## Why Lumo
 
 Property ads are written to sell. A listing says "quiet street" and "great value", and checking either claim means hours on maps, rent sites and council records. Most people skip that and find out after they've signed the lease.

@@ -1,0 +1,9 @@
+{
+  "name": "Lumo",
+  "short_name": "Lumo",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#f5f5f7",
+  "icons": [{ "src": "/icon.png", "sizes": "128x128", "type": "image/png" }]
+}
